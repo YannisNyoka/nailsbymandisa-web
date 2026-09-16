@@ -74,8 +74,8 @@ export function HomePage() {
 
       {workItems && workItems.length > 0 && (
         <section className="home__work">
-          <p className="home__work-eyebrow">Our work</p>
-          <h2 className="home__work-heading">Real Clients. Real Results.</h2>
+          <h1 className="home__work-eyebrow">Our work</h1>
+        
           <p className="home__work-subtitle">Swipe to explore our gallery</p>
           <div className="home__work-scroller">
             {workItems.map((item) => (

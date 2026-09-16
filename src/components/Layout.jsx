@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '../design-system';
 import { WhatsAppButton } from './WhatsAppButton.jsx';
 import { InstallPrompt } from './InstallPrompt.jsx';
+import { SocialLinks } from './SocialLinks.jsx';
 import './Layout.css';
 
 const YEAR = new Date().getFullYear();
@@ -71,6 +72,7 @@ export function Layout() {
           <a href="mailto:nailsbymandisa@gmail.com">nailsbymandisa@gmail.com</a>
           <span>882 Almondrock, Strubensvalley, Roodepoort, 1734</span>
         </div>
+        <SocialLinks />
         <p className="layout__footer-copyright">&copy; {YEAR} NailsByMandisa. All rights reserved.</p>
       </footer>
       {!isAdminRoute && (
