@@ -1,0 +1,120 @@
+/*
+ * Design tokens — single source of truth for color/spacing/type (§7.8).
+ * NailsByMandisa brand palette: black + white + a dusty-rose pink accent, matching
+ * the logo mark. --color-ink/--color-ink-text are the dedicated black-surface pair for
+ * the header/footer "logo lockup" band (see Layout.css) — everything else (booking
+ * forms, tables, the admin dashboard) stays on the light --color-bg/--color-surface
+ * pair for readability, per the chosen "light site, black + pink accents" direction.
+ */
+:root {
+  /* Color */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f2f4;
+  --color-border: #e5dfe1;
+  --color-text: #161214;
+  --color-text-muted: #6b6266;
+  --color-text-inverse: #ffffff;
+
+  --color-accent: #c17a90;
+  --color-accent-hover: #a35f75;
+  --color-accent-muted: #f6e6ea;
+
+  /* Black surface pair — header/footer only, never the page background. Pure #000 so the
+     real logo image (also a flat #000 background) sits on it with zero visible seam. */
+  --color-ink: #000000;
+  --color-ink-text: #ffffff;
+  --color-ink-muted: #b8b0b3;
+
+  --color-success: #3f7d5c;
+  --color-success-bg: #e6f2ec;
+  --color-danger: #b3453b;
+  --color-danger-bg: #f8e8e6;
+  --color-warning: #b3822f;
+  --color-warning-bg: #f8efdf;
+  --color-info: #3f6d7d;
+  --color-info-bg: #e6eef2;
+
+  --color-focus-ring: #c17a90;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Type */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.16);
+
+  /* Motion */
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #131113;
+    --color-surface: #1c191b;
+    --color-surface-muted: #242024;
+    --color-border: #383235;
+    --color-text: #f5f2f3;
+    --color-text-muted: #bdb4b8;
+    --color-accent: #dd9aac;
+    --color-accent-hover: #e6afbe;
+    --color-accent-muted: #3a2b30;
+    --color-ink: #000000;
+    --color-ink-muted: #9c9296;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  /* Safety net for full-bleed sections that break out of the centered content column via
+     `width: 100vw` (e.g. HomePage.css's .home__hero) — vw units include the scrollbar
+     gutter on some browsers/platforms, which can force a stray 1px of horizontal scroll
+     even when the layout is otherwise correct. This only suppresses accidental overflow;
+     nothing in this app relies on intentional horizontal scroll at the body level. */
+  overflow-x: clip;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}

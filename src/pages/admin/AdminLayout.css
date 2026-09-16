@@ -1,0 +1,196 @@
+/* The site-wide Layout caps .layout__main at 960px for reading comfort on public pages —
+   too narrow for a sidebar + table dashboard. Only widen it when the admin shell is
+   actually inside it, so nothing else is affected. */
+.layout__main:has(> .admin-layout) {
+  max-width: 1400px;
+}
+
+.admin-layout {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+
+.admin-layout__nav {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+  position: sticky;
+  top: var(--space-5);
+  background: var(--color-ink);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  gap: var(--space-4);
+}
+
+.admin-layout__nav-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.admin-layout__nav-logo {
+  height: 44px;
+  width: auto;
+}
+.admin-layout__nav-caption {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.admin-layout__nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.admin-layout__nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.admin-layout__nav-icon {
+  font-size: var(--text-base);
+  line-height: 1;
+  width: 1.2em;
+  text-align: center;
+}
+.admin-layout__nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-ink-text);
+}
+.admin-layout__nav-link--active {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.admin-layout__nav-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.admin-layout__nav-back {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+}
+.admin-layout__nav-back:hover {
+  color: var(--color-ink-text);
+}
+.admin-layout__nav-logout {
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-layout__nav-logout:hover {
+  opacity: 0.9;
+}
+
+.admin-layout__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-layout__page {
+  margin-top: var(--space-5);
+}
+
+.admin-top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.admin-top-bar__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+.admin-top-bar__subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.admin-top-bar__user {
+  text-align: right;
+}
+.admin-top-bar__user-name {
+  margin: 0;
+  font-weight: 600;
+}
+.admin-top-bar__user-email {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.admin-layout__nav-toggle {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .admin-layout {
+    flex-direction: column;
+    /* .admin-layout sets `align-items: flex-start` for the desktop row layout (so nav
+       and content top-align instead of stretching to equal height). In this column
+       layout the cross-axis is width, not height, so flex-start left `.admin-layout__content`
+       sized to its widest child's intrinsic width instead of the viewport — e.g. a wide
+       admin table — pushing the whole page into horizontal scroll instead of letting the
+       table's own `overflow-x: auto` wrapper contain it. Stretch forces content back to
+       100% width so that wrapper can do its job. */
+    align-items: stretch;
+  }
+
+  /* The full nav is long enough that on mobile it's collapsed behind this toggle
+     (showing the current page's label) instead of pushing every page's content below
+     the fold. */
+  .admin-layout__nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-ink);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--color-ink-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .admin-layout__nav {
+    display: none;
+    position: static;
+    width: 100%;
+  }
+  .admin-layout__nav--open {
+    display: flex;
+  }
+
+  .admin-top-bar__user {
+    text-align: left;
+  }
+}

@@ -1,0 +1,32 @@
+.subscription-plans {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.subscription-plans h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-5);
+}
+
+.subscription-plans__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.subscription-plan-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+.subscription-plan-card h2 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-2);
+}
+.subscription-plan-card__price {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--color-accent);
+  margin: var(--space-2) 0;
+}

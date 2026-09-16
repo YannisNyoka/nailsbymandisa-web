@@ -1,0 +1,231 @@
+.home__hero {
+  /* Full-bleed: breaks out of the shared Layout's centered/padded .layout__main so the
+     photo spans the whole viewport width, not just this page's content column. The
+     `calc(-50vw + 50%)` form (vs. a flat `-50vw` margin) centers correctly relative to
+     this element's own position regardless of the ancestor's padding/max-width.
+     `overflow-x: clip` on body (tokens.css) is the safety net for this technique's usual
+     failure mode — vw units include the scrollbar gutter on some browsers, which can
+     otherwise force 1 stray pixel of horizontal scroll. margin-top cancels that same
+     ancestor's top padding too, so the hero sits flush under the header with no gap. */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-top: calc(-1 * var(--space-5));
+
+  position: relative;
+  overflow: hidden;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  padding: var(--space-7) var(--space-5);
+}
+
+/* Admin-editable (image or video — see AdminHomepagePage.jsx) — an <img>/<video> element
+   rather than a CSS background-image so video is possible at all, with object-fit:cover
+   giving the same fill behavior background-size:cover used to. */
+.home__hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.home__hero-media-el {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home__hero-overlay {
+  position: absolute;
+  inset: 0;
+  /* Dark scrim so the overlaid white text stays readable against a light/busy photo. */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.45) 55%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.home__hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+}
+
+.home__hero p.home__hero-tagline {
+  color: var(--color-accent);
+  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-3);
+}
+
+.home__hero-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-6);
+}
+
+.home__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.home__cta {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.home__cta--primary {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+.home__cta--primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.home__cta--secondary {
+  background: transparent;
+  color: var(--color-text-inverse);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.home__cta--secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 480px) {
+  .home__hero {
+    min-height: 60vh;
+  }
+  .home__hero p.home__hero-tagline {
+    font-size: var(--text-base);
+  }
+  .home__hero-subtitle {
+    font-size: var(--text-base);
+  }
+}
+
+.home__work {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) 0 0;
+  text-align: center;
+}
+.home__work-eyebrow {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+.home__work-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-2);
+}
+.home__work-subtitle {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+/* Bleeds to the full viewport width (same technique as .home__hero) while the heading
+   above stays within the page's normal content column — the scrollable row itself is
+   meant to run past both edges as a visual cue that there's more to swipe through. */
+.home__work-scroller {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding: 0 var(--space-5) var(--space-4);
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home__work-card {
+  flex: 0 0 220px;
+  scroll-snap-align: start;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.home__work-card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--color-ink);
+  overflow: hidden;
+}
+.home__work-card-media img,
+.home__work-card-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.home__work-card-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-text);
+  font-size: 26px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.home__work-card-caption {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.home__work-swipe-hint {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.home__services {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-5);
+}
+.home__services h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+.home__service-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.home__service {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.home__service-name {
+  font-weight: 600;
+}
+
+.home__service-meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}

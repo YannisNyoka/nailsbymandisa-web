@@ -1,0 +1,198 @@
+/* The page title itself now lives in AdminTopBar — this row only ever holds a single
+   trailing action (an "Add X" button, a status badge), hence flex-end rather than the
+   space-between it needed back when a title shared the row. */
+.admin-page__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.admin-page__filters {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: var(--space-4);
+}
+.admin-page__filters .ds-field {
+  margin-bottom: 0;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.stat-card__icon {
+  font-size: var(--text-xl);
+  line-height: 1;
+}
+.stat-card__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin-top: var(--space-1);
+}
+
+/* Variants for the Overview stat grid — all still drawn from the existing token palette
+   (ink/pink/semantic colors), just applied as card backgrounds instead of only text, for
+   the at-a-glance color-coding the reference dashboard has. */
+.stat-card--ink {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+.stat-card--ink .stat-card__label { color: var(--color-ink-muted); }
+.stat-card--ink .stat-card__value { color: var(--color-ink-text); }
+
+.stat-card--accent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.stat-card--accent .stat-card__label { color: rgba(255, 255, 255, 0.85); }
+.stat-card--accent .stat-card__value { color: var(--color-text-inverse); }
+
+.stat-card--accent-muted {
+  background: var(--color-accent-muted);
+  border-color: var(--color-accent-muted);
+}
+.stat-card--accent-muted .stat-card__label { color: var(--color-accent-hover); }
+.stat-card--accent-muted .stat-card__value { color: var(--color-text); }
+
+.stat-card--danger {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-bg);
+}
+.stat-card--danger .stat-card__label,
+.stat-card--danger .stat-card__value { color: var(--color-danger); }
+
+.stat-card--warning {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-bg);
+}
+.stat-card--warning .stat-card__label,
+.stat-card--warning .stat-card__value { color: var(--color-warning); }
+
+.admin-chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.admin-chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.admin-chart-card__header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+.admin-chart-card__range {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.admin-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.activity-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.activity-feed li {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+.activity-feed time {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  margin-top: 2px;
+}
+
+.admin-table-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+@media (max-width: 480px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-page__muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.admin-permission-checklist {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+@media (max-width: 480px) {
+  .admin-permission-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+.admin-permission-checklist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.admin-homepage__current,
+.admin-homepage__preview {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+.admin-homepage__preview {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
+}

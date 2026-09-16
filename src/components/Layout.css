@@ -1,0 +1,148 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-ink);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.layout__brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.layout__brand-logo {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.layout__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.layout__nav a {
+  color: var(--color-ink-text);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+.layout__nav a:hover {
+  color: var(--color-accent);
+}
+
+.layout__cta-link {
+  background: var(--color-accent);
+  color: var(--color-text-inverse) !important;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+.layout__cta-link:hover {
+  background: var(--color-accent-hover);
+}
+
+.layout__account-menu {
+  position: relative;
+}
+.layout__account-menu summary {
+  cursor: pointer;
+  color: var(--color-ink-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  list-style: none;
+}
+.layout__account-menu summary::-webkit-details-marker {
+  display: none;
+}
+.layout__account-menu summary::after {
+  content: ' \25BE';
+}
+.layout__account-menu[open] summary {
+  color: var(--color-accent);
+}
+.layout__account-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 10;
+}
+.layout__account-menu-panel a {
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.layout__account-menu-panel a:hover {
+  background: var(--color-surface-muted);
+}
+
+.layout__main {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-5);
+}
+
+.layout__footer {
+  background: var(--color-ink);
+  color: var(--color-ink-muted);
+  /* Extra bottom padding reserves clear space above the fixed WhatsAppButton (bottom-left,
+     ~50px tall) — without it, the last line of footer text sits directly behind the
+     button on short pages, since a fixed element stays pinned to the viewport even once
+     the page is scrolled all the way down. */
+  padding: var(--space-6) var(--space-5) calc(var(--space-8) + var(--space-5));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.layout__footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.layout__brand-logo--footer {
+  height: 100px;
+}
+
+.layout__footer-contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+}
+.layout__footer-contact a {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+}
+.layout__footer-contact a:hover {
+  color: var(--color-accent);
+}
+
+.layout__footer-copyright {
+  margin: 0;
+  font-size: var(--text-xs);
+}

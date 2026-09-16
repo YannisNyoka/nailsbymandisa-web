@@ -1,0 +1,21 @@
+.booking-confirmation {
+  max-width: 480px;
+  margin: var(--space-7) auto;
+  text-align: center;
+}
+
+.booking-confirmation h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-4);
+}
+
+.booking-confirmation--success h1 {
+  color: var(--color-success);
+}
+
+.booking-confirmation a {
+  color: var(--color-accent);
+  display: inline-block;
+  margin-top: var(--space-4);
+}

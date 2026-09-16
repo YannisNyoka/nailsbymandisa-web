@@ -1,0 +1,42 @@
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.ds-field__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ds-field input,
+.ds-field select,
+.ds-field textarea {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ds-field input[aria-invalid='true'],
+.ds-field select[aria-invalid='true'],
+.ds-field textarea[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.ds-field__hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.ds-field__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin: 0;
+}
