@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { AdminTopBar } from './AdminTopBar.jsx';
 import './AdminLayout.css';
@@ -27,13 +27,26 @@ const NAV_ITEMS = [
   { to: '/admin/users', label: 'Admin users', icon: '🔑' },
 ];
 
+// A linked staff login (role 'staff') only ever sees what concerns them — their own
+// appointments, schedule and overview — never the full salon-wide admin surface. This is
+// a UX convenience (hide the nav, redirect away from other pages); the real boundary is
+// server-side scoping in every admin route (see requirePermissionOrStaffSelf).
+const STAFF_ALLOWED_PATHS = ['/admin', '/admin/appointments', '/admin/schedule'];
+const STAFF_NAV_ITEMS = NAV_ITEMS.filter((item) => STAFF_ALLOWED_PATHS.includes(item.to));
+
 export function AdminLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const location = useLocation();
-  const { logout } = useAuth();
-  const activeItem = NAV_ITEMS.find((item) =>
+  const { user, logout } = useAuth();
+  const isStaff = user?.role === 'staff';
+  const navItems = isStaff ? STAFF_NAV_ITEMS : NAV_ITEMS;
+  const activeItem = navItems.find((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   );
+
+  if (isStaff && !STAFF_ALLOWED_PATHS.some((p) => (p === '/admin' ? location.pathname === p : location.pathname.startsWith(p)))) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <div className="admin-layout">
@@ -54,7 +67,7 @@ export function AdminLayout() {
           <p className="admin-layout__nav-caption">Admin panel</p>
         </div>
         <div className="admin-layout__nav-links">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

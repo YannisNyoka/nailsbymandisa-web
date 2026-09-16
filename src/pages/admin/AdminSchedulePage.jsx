@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { Button, useToast } from '../../design-system';
 import './AdminSchedulePage.css';
 
@@ -52,6 +53,8 @@ function appointmentAt(slot, appointments, employeeId) {
 }
 
 export function AdminSchedulePage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
   const [mode, setMode] = useState('daily');
   const [date, setDate] = useState(() => toDateString(new Date()));
@@ -59,14 +62,18 @@ export function AdminSchedulePage() {
   const [servicesById, setServicesById] = useState({});
   const [appointments, setAppointments] = useState([]);
   const [blocks, setBlocks] = useState([]);
-  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState(() => (isStaff ? user.employeeId : ''));
 
   useEffect(() => {
     Promise.all([apiClient.get('/staff'), apiClient.get('/services')]).then(([{ employees }, { services }]) => {
-      setStaff(employees.filter((e) => e.isActive));
+      // A linked staff login only ever sees their own column/schedule — never the rest of
+      // the team's, even though /api/staff itself is public data.
+      const visible = isStaff ? employees.filter((e) => String(e._id) === String(user.employeeId)) : employees.filter((e) => e.isActive);
+      setStaff(visible);
       setServicesById(Object.fromEntries(services.map((s) => [s._id, s])));
-      setSelectedStaffId((current) => current || employees[0]?._id || '');
+      setSelectedStaffId((current) => current || (isStaff ? user.employeeId : employees[0]?._id) || '');
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDaily = useCallback(async () => {
@@ -123,7 +130,7 @@ export function AdminSchedulePage() {
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, mode === 'daily' ? 1 : 7))}>Next ›</Button>
         <Button size="sm" variant="secondary" onClick={() => setDate(toDateString(new Date()))}>Today</Button>
-        {mode === 'weekly' && (
+        {mode === 'weekly' && !isStaff && (
           <select value={selectedStaffId} onChange={(e) => setSelectedStaffId(e.target.value)}>
             {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
           </select>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { apiClient } from '../../lib/apiClient.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { Badge, Button, ConfirmDialog, FormField, Pagination, Table, useToast } from '../../design-system';
 import './AdminPages.css';
 
@@ -19,6 +20,8 @@ function csvEscape(value) {
 }
 
 export function AdminAppointmentsPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
   const [data, setData] = useState(null);
   const [services, setServices] = useState([]);
@@ -127,7 +130,7 @@ export function AdminAppointmentsPage() {
       key: 'actions',
       header: '',
       render: (a) =>
-        ['pending_payment', 'confirmed'].includes(a.status) && (
+        !isStaff && ['pending_payment', 'confirmed'].includes(a.status) && (
           <Button variant="danger" size="sm" onClick={() => setCancelTarget(a)}>
             Cancel
           </Button>
@@ -157,12 +160,14 @@ export function AdminAppointmentsPage() {
             <option value="no_show">No-show</option>
           </select>
         </FormField>
-        <FormField label="Staff">
-          <select value={staffFilter} onChange={(e) => { setPage(1); setStaffFilter(e.target.value); }}>
-            <option value="">All staff</option>
-            {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-        </FormField>
+        {!isStaff && (
+          <FormField label="Staff">
+            <select value={staffFilter} onChange={(e) => { setPage(1); setStaffFilter(e.target.value); }}>
+              <option value="">All staff</option>
+              {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+            </select>
+          </FormField>
+        )}
         <FormField label="Service">
           <select value={serviceFilter} onChange={(e) => { setPage(1); setServiceFilter(e.target.value); }}>
             <option value="">All services</option>

@@ -32,7 +32,7 @@ export function Layout() {
           <Link to="/subscriptions/plans">Membership</Link>
           {isAuthenticated ? (
             <>
-              {user.role === 'admin' && <Link to="/admin">Admin</Link>}
+              {(user.role === 'admin' || user.role === 'staff') && <Link to="/admin">Admin</Link>}
               <Link to="/account/notifications">Notifications</Link>
               <details className="layout__account-menu">
                 <summary>{user.firstName}</summary>

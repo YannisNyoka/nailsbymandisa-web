@@ -44,12 +44,13 @@ function PermissionChecklist({ selected, onChange }) {
   );
 }
 
-const emptyInviteForm = { email: '', firstName: '', lastName: '', permissions: [] };
+const emptyInviteForm = { email: '', firstName: '', lastName: '', permissions: [], role: 'admin', employeeId: '' };
 
 export function AdminUsersPage() {
   const { user: currentUser } = useAuth();
   const { showToast } = useToast();
   const [data, setData] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [page, setPage] = useState(1);
   const [inviting, setInviting] = useState(false);
   const [inviteForm, setInviteForm] = useState(emptyInviteForm);
@@ -67,6 +68,12 @@ export function AdminUsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  useEffect(() => {
+    apiClient.get('/staff').then(({ employees: all }) => setEmployees(all.filter((e) => e.isActive)));
+  }, []);
+
+  const employeesById = Object.fromEntries(employees.map((e) => [e._id, e]));
+
   async function handleInvite(e) {
     e.preventDefault();
     setSubmitting(true);
@@ -75,14 +82,16 @@ export function AdminUsersPage() {
         email: inviteForm.email,
         firstName: inviteForm.firstName || undefined,
         lastName: inviteForm.lastName || undefined,
-        permissions: inviteForm.permissions,
+        role: inviteForm.role,
+        permissions: inviteForm.role === 'staff' ? [] : inviteForm.permissions,
+        employeeId: inviteForm.role === 'staff' ? inviteForm.employeeId : undefined,
       });
-      showToast('Admin access granted.', { variant: 'success' });
+      showToast(inviteForm.role === 'staff' ? 'Staff access granted.' : 'Admin access granted.', { variant: 'success' });
       setInviting(false);
       setInviteForm(emptyInviteForm);
       await load();
     } catch (err) {
-      showToast(err.message || 'Could not grant admin access.', { variant: 'error' });
+      showToast(err.message || 'Could not grant access.', { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -113,10 +122,22 @@ export function AdminUsersPage() {
     { key: 'name', header: 'Name', render: (u) => `${u.firstName} ${u.lastName}` },
     { key: 'email', header: 'Email' },
     {
+      key: 'role',
+      header: 'Role',
+      render: (u) =>
+        u.role === 'staff' ? (
+          <span>Staff — {employeesById[u.employeeId]?.name || 'unlinked'}</span>
+        ) : (
+          <span>Admin</span>
+        ),
+    },
+    {
       key: 'permissions',
       header: 'Permissions',
       render: (u) =>
-        u.permissions.length === 0 ? (
+        u.role === 'staff' ? (
+          <span className="admin-page__muted">Own appointments/schedule/overview only</span>
+        ) : u.permissions.length === 0 ? (
           <span className="admin-page__muted">None yet</span>
         ) : (
           <span>{u.permissions.length} granted</span>
@@ -130,16 +151,18 @@ export function AdminUsersPage() {
           <span className="admin-page__muted">That's you</span>
         ) : (
           <div className="admin-table-actions">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setEditPermissions(u.permissions);
-                setEditing(u);
-              }}
-            >
-              Edit permissions
-            </Button>
+            {u.role !== 'staff' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setEditPermissions(u.permissions);
+                  setEditing(u);
+                }}
+              >
+                Edit permissions
+              </Button>
+            )}
             <Button variant="danger" size="sm" onClick={() => setRevokeTarget(u)}>
               Revoke
             </Button>
@@ -153,11 +176,13 @@ export function AdminUsersPage() {
   return (
     <div>
       <div className="admin-page__header-row">
-        <Button onClick={() => setInviting(true)}>Grant admin access</Button>
+        <Button onClick={() => setInviting(true)}>Grant access</Button>
       </div>
       <p className="admin-page__muted" style={{ marginTop: `calc(-1 * var(--space-4))`, marginBottom: 'var(--space-4)' }}>
-        Anyone with admin access only gets the specific permissions checked below — never
-        blanket access. You can't edit or revoke your own access here; ask another admin.
+        Admin access only gets the specific permissions checked at invite time — never
+        blanket access. Staff access is scoped automatically to that person's own
+        appointments, schedule and overview. You can't edit or revoke your own access here;
+        ask another admin.
       </p>
       <Table columns={columns} rows={data.adminUsers} getRowKey={(u) => u._id} emptyMessage="No admin users yet." />
       <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onPageChange={setPage} />
@@ -165,7 +190,7 @@ export function AdminUsersPage() {
       <Modal
         isOpen={inviting}
         onClose={() => setInviting(false)}
-        title="Grant admin access"
+        title="Grant admin or staff access"
         footer={
           <>
             <Button variant="secondary" onClick={() => setInviting(false)} disabled={submitting}>Cancel</Button>
@@ -185,8 +210,25 @@ export function AdminUsersPage() {
               <input value={inviteForm.lastName} onChange={(e) => setInviteForm((f) => ({ ...f, lastName: e.target.value }))} />
             </FormField>
           </div>
-          <p className="ds-field__label" style={{ marginBottom: 'var(--space-2)' }}>Permissions</p>
-          <PermissionChecklist selected={inviteForm.permissions} onChange={(permissions) => setInviteForm((f) => ({ ...f, permissions }))} />
+          <FormField label="Access type" required>
+            <select value={inviteForm.role} onChange={(e) => setInviteForm((f) => ({ ...f, role: e.target.value }))}>
+              <option value="admin">Admin — pick specific permissions below</option>
+              <option value="staff">Staff — sees only their own appointments/schedule/overview</option>
+            </select>
+          </FormField>
+          {inviteForm.role === 'staff' ? (
+            <FormField label="Which staff member" required hint="Links this login to their staff/employee record — that's how the dashboard knows which bookings are theirs.">
+              <select value={inviteForm.employeeId} onChange={(e) => setInviteForm((f) => ({ ...f, employeeId: e.target.value }))}>
+                <option value="">Select…</option>
+                {employees.map((emp) => <option key={emp._id} value={emp._id}>{emp.name}</option>)}
+              </select>
+            </FormField>
+          ) : (
+            <>
+              <p className="ds-field__label" style={{ marginBottom: 'var(--space-2)' }}>Permissions</p>
+              <PermissionChecklist selected={inviteForm.permissions} onChange={(permissions) => setInviteForm((f) => ({ ...f, permissions }))} />
+            </>
+          )}
         </form>
       </Modal>
 

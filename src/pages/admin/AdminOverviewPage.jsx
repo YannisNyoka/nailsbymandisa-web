@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { Button, SimpleLineChart, SimpleBarChart, useToast } from '../../design-system';
 import './AdminPages.css';
 
@@ -33,6 +34,8 @@ function StatCard({ icon, label, value, variant }) {
 }
 
 export function AdminOverviewPage() {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
   const [stats, setStats] = useState(null);
   const [revenueDays, setRevenueDays] = useState(7);
@@ -109,25 +112,31 @@ export function AdminOverviewPage() {
         {bookingsTrend && <SimpleBarChart points={bookingsTrend.points} series={BOOKINGS_SERIES} />}
       </div>
 
-      <div className="admin-chart-card">
-        <h2 style={{ marginBottom: 'var(--space-4)' }}>Quick actions</h2>
-        <div className="admin-quick-actions">
-          <Link to="/book"><Button>+ New booking</Button></Link>
-          <Link to="/admin/services"><Button variant="secondary">+ Add service</Button></Link>
-          <Link to="/admin/availability"><Button variant="secondary">⛔ Block time</Button></Link>
+      {!isStaff && (
+        <div className="admin-chart-card">
+          <h2 style={{ marginBottom: 'var(--space-4)' }}>Quick actions</h2>
+          <div className="admin-quick-actions">
+            <Link to="/book"><Button>+ New booking</Button></Link>
+            <Link to="/admin/services"><Button variant="secondary">+ Add service</Button></Link>
+            <Link to="/admin/availability"><Button variant="secondary">⛔ Block time</Button></Link>
+          </div>
         </div>
-      </div>
+      )}
 
-      <h2>Recent activity</h2>
-      <ul className="activity-feed">
-        {stats.recentActivity.length === 0 && <li>No activity yet.</li>}
-        {stats.recentActivity.map((entry) => (
-          <li key={entry._id}>
-            {entry.message}
-            <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time>
-          </li>
-        ))}
-      </ul>
+      {!isStaff && (
+        <>
+          <h2>Recent activity</h2>
+          <ul className="activity-feed">
+            {stats.recentActivity.length === 0 && <li>No activity yet.</li>}
+            {stats.recentActivity.map((entry) => (
+              <li key={entry._id}>
+                {entry.message}
+                <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
