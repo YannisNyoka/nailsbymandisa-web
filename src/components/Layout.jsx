@@ -1,4 +1,5 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '../design-system';
 import { WhatsAppButton } from './WhatsAppButton.jsx';
@@ -8,14 +9,25 @@ import './Layout.css';
 
 const YEAR = new Date().getFullYear();
 
+function navLinkClass({ isActive }) {
+  return isActive ? 'layout__nav-link--active' : undefined;
+}
+
 export function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
+  const [navOpen, setNavOpen] = useState(false);
   // Neither makes sense inside the admin dashboard — WhatsApp is a customer contact
   // channel, and the install prompt is for the public/account side of the site. Both are
   // also fixed-position, so on /admin they'd otherwise float over the sidebar's own
   // "Back to site"/"Log out" controls.
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Close the mobile nav panel automatically whenever the route changes, so tapping a
+  // link doesn't leave the panel open behind the new page.
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="layout">
@@ -23,17 +35,26 @@ export function Layout() {
         <Link to="/" className="layout__brand">
           <img src="/brand/logo-lockup.png" alt="NailsByMandisa — Clean. Chic. Creative." className="layout__brand-logo" />
         </Link>
-        <nav className="layout__nav" aria-label="Main">
+        <button
+          type="button"
+          className="layout__nav-toggle"
+          aria-expanded={navOpen}
+          aria-label={navOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setNavOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{navOpen ? '✕' : '☰'}</span>
+        </button>
+        <nav className={`layout__nav${navOpen ? ' layout__nav--open' : ''}`} aria-label="Main">
           <Link to="/book" className="layout__cta-link">
             Book now
           </Link>
-          <Link to="/gallery">Gallery</Link>
-          <Link to="/gift-cards/purchase">Gift cards</Link>
-          <Link to="/subscriptions/plans">Membership</Link>
+          <NavLink to="/gallery" className={navLinkClass}>Gallery</NavLink>
+          <NavLink to="/gift-cards/purchase" className={navLinkClass}>Gift cards</NavLink>
+          <NavLink to="/subscriptions/plans" className={navLinkClass}>Membership</NavLink>
           {isAuthenticated ? (
             <>
-              {(user.role === 'admin' || user.role === 'staff') && <Link to="/admin">Admin</Link>}
-              <Link to="/account/notifications">Notifications</Link>
+              {(user.role === 'admin' || user.role === 'staff') && <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>}
+              <NavLink to="/account/notifications" className={navLinkClass}>Notifications</NavLink>
               <details className="layout__account-menu">
                 <summary>{user.firstName}</summary>
                 <div className="layout__account-menu-panel">

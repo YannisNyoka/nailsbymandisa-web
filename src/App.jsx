@@ -10,6 +10,7 @@ import { LoginPage } from './pages/auth/LoginPage.jsx';
 import { RegisterPage } from './pages/auth/RegisterPage.jsx';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage.jsx';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage.jsx';
+import { AccountLayout } from './pages/account/AccountLayout.jsx';
 import { ProfilePage } from './pages/account/ProfilePage.jsx';
 import { BookingsPage } from './pages/account/BookingsPage.jsx';
 import { NotificationsPage } from './pages/account/NotificationsPage.jsx';
@@ -42,6 +43,7 @@ import { AdminComposeNotificationPage } from './pages/admin/AdminComposeNotifica
 import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx';
 import { AdminSchedulePage } from './pages/admin/AdminSchedulePage.jsx';
 import { AdminHomepagePage } from './pages/admin/AdminHomepagePage.jsx';
+import { NotFoundPage } from './pages/NotFoundPage.jsx';
 
 // More routes land here as each build-order step reaches the frontend: PWA install,
 // SEO.
@@ -63,13 +65,15 @@ export function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/account/profile" element={<ProfilePage />} />
-          <Route path="/account/bookings" element={<BookingsPage />} />
-          <Route path="/account/notifications" element={<NotificationsPage />} />
-          <Route path="/account/loyalty" element={<LoyaltyPage />} />
-          <Route path="/account/referrals" element={<ReferralsPage />} />
-          <Route path="/account/gift-cards" element={<GiftCardsPage />} />
-          <Route path="/account/subscription" element={<SubscriptionPage />} />
+          <Route element={<AccountLayout />}>
+            <Route path="/account/profile" element={<ProfilePage />} />
+            <Route path="/account/bookings" element={<BookingsPage />} />
+            <Route path="/account/notifications" element={<NotificationsPage />} />
+            <Route path="/account/loyalty" element={<LoyaltyPage />} />
+            <Route path="/account/referrals" element={<ReferralsPage />} />
+            <Route path="/account/gift-cards" element={<GiftCardsPage />} />
+            <Route path="/account/subscription" element={<SubscriptionPage />} />
+          </Route>
           <Route path="/gallery/submit" element={<SubmitPhotoPage />} />
         </Route>
 
@@ -96,6 +100,8 @@ export function App() {
             <Route path="users" element={<AdminUsersPage />} />
           </Route>
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );

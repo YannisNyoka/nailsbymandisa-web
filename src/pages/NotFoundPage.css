@@ -1,0 +1,31 @@
+.not-found-page {
+  max-width: 520px;
+  margin: var(--space-8) auto;
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.not-found-page__eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-accent);
+  margin: 0 0 var(--space-2);
+}
+
+.not-found-page h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-3);
+}
+
+.not-found-page p {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-5);
+}
+
+.not-found-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
