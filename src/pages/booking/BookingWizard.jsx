@@ -145,15 +145,23 @@ export function BookingWizard() {
 
   async function handleConfirm() {
     setSubmitting(true);
+    let appointment;
     try {
-      const { appointment } = await apiClient.post('/appointments', {
+      ({ appointment } = await apiClient.post('/appointments', {
         serviceIds: selectedServiceIds,
         date,
         startTime,
         employeeId,
         notes: notes || null,
         ...(isAuthenticated ? {} : { guestInfo }),
-      });
+      }));
+    } catch (err) {
+      showToast(err.message || 'Could not complete your booking. Please try a different time.', { variant: 'error' });
+      setSubmitting(false);
+      return;
+    }
+
+    try {
       const { payment } = await apiClient.post(`/payments/appointments/${appointment._id}/checkout`, {
         ...(useCredit
           ? { useSubscriptionCredit: true }
@@ -170,8 +178,13 @@ export function BookingWizard() {
         window.location.href = payment.redirectUrl;
       }
     } catch (err) {
-      showToast(err.message || 'Could not complete your booking. Please try a different time.', { variant: 'error' });
-      setSubmitting(false);
+      // The appointment already exists at this point (created above) — send them to the
+      // same recovery page Yoco's own cancel/failure redirect uses, which retries
+      // *payment* for this existing appointment. Just showing a toast and leaving them on
+      // the wizard would strand them: clicking "Continue to payment" again re-submits
+      // POST /appointments for a slot that's already theirs, and 409s.
+      showToast(err.message || 'Something interrupted your payment — retrying.', { variant: 'error' });
+      navigate(`/booking/payment?appointmentId=${appointment._id}&status=failed`);
     }
   }
 
