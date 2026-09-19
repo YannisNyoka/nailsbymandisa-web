@@ -1,15 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient.js';
 import { useDocumentMeta } from '../lib/useDocumentMeta.js';
 import './HomePage.css';
 
-// Matches api/src/models/settings.js DEFAULT_SETTINGS.heroMedia — used only until the
-// real value loads from GET /api/settings, so there's no flash of an empty hero.
-const FALLBACK_HERO_MEDIA = {
-  url: 'https://res.cloudinary.com/akrzser7/image/upload/f_auto,q_auto,c_fill,g_auto,w_1920,h_1200/v1789408147/nailsbymandisa/gallery/ldge1cwpb9zji2j0tvlm.jpg',
-  type: 'image',
-};
+// Matches api/src/models/settings.js DEFAULT_SETTINGS.heroMediaItems — used only until
+// the real value loads from GET /api/settings, so there's no flash of an empty hero.
+const FALLBACK_HERO_MEDIA_ITEMS = [
+  {
+    url: 'https://res.cloudinary.com/akrzser7/image/upload/f_auto,q_auto,c_fill,g_auto,w_1920,h_1200/v1789408147/nailsbymandisa/gallery/ldge1cwpb9zji2j0tvlm.jpg',
+    type: 'image',
+  },
+];
+
+const IMAGE_SLIDE_MS = 5000;
+
+// Plays the admin-uploaded hero items in sequence, looping back to the first — a video
+// advances when it finishes, an image advances after IMAGE_SLIDE_MS. With only one item
+// this just plays/loops it like the hero always used to (no advancing needed).
+function HeroSlideshow({ items }) {
+  const [index, setIndex] = useState(0);
+  const timerRef = useRef(null);
+
+  function advance() {
+    setIndex((i) => (i + 1) % items.length);
+  }
+
+  useEffect(() => {
+    setIndex(0);
+  }, [items]);
+
+  const current = items[index] ?? items[0];
+
+  useEffect(() => {
+    if (items.length <= 1 || current.type !== 'image') return undefined;
+    timerRef.current = setTimeout(advance, IMAGE_SLIDE_MS);
+    return () => clearTimeout(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, items.length, current.type]);
+
+  return current.type === 'video' ? (
+    <video
+      key={current.url}
+      className="home__hero-media-el"
+      src={current.url}
+      autoPlay
+      muted
+      loop={items.length <= 1}
+      onEnded={items.length > 1 ? advance : undefined}
+      playsInline
+      aria-hidden="true"
+    />
+  ) : (
+    <img key={current.url} className="home__hero-media-el" src={current.url} alt="Freshly done nails by NailsByMandisa" />
+  );
+}
 
 // Hero copy is still placeholder text (§2). The hero background is admin-editable (real
 // photography by default — an actual NailsByMandisa manicure hosted on Cloudinary; see
@@ -23,7 +68,7 @@ const WORK_ITEM_LIMIT = 10;
 
 export function HomePage() {
   const [services, setServices] = useState(null);
-  const [heroMedia, setHeroMedia] = useState(FALLBACK_HERO_MEDIA);
+  const [heroMediaItems, setHeroMediaItems] = useState(FALLBACK_HERO_MEDIA_ITEMS);
   const [workItems, setWorkItems] = useState(null);
   useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.');
 
@@ -35,7 +80,7 @@ export function HomePage() {
     apiClient
       .get('/settings')
       .then(({ settings }) => {
-        if (settings.heroMedia?.url) setHeroMedia(settings.heroMedia);
+        if (settings.heroMediaItems?.length) setHeroMediaItems(settings.heroMediaItems);
       })
       .catch(() => {});
     Promise.all([apiClient.get('/gallery'), apiClient.get('/client-gallery')])
@@ -51,11 +96,7 @@ export function HomePage() {
     <main className="home">
       <section className="home__hero">
         <div className="home__hero-media">
-          {heroMedia.type === 'video' ? (
-            <video className="home__hero-media-el" src={heroMedia.url} autoPlay muted loop playsInline aria-hidden="true" />
-          ) : (
-            <img className="home__hero-media-el" src={heroMedia.url} alt="Freshly done nails by NailsByMandisa" />
-          )}
+          <HeroSlideshow items={heroMediaItems} />
           <div className="home__hero-overlay" />
         </div>
         <div className="home__hero-content">

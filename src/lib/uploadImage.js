@@ -9,3 +9,12 @@ export async function uploadImageFile(file) {
   const { url } = await apiClient.post('/uploads/image', formData);
   return url;
 }
+
+// Same pattern, separate endpoint (own size limit/mimetypes/permission — see
+// api/src/routes/uploads.js) — used by the home page hero editor.
+export async function uploadVideoFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { url } = await apiClient.post('/uploads/video', formData);
+  return url;
+}

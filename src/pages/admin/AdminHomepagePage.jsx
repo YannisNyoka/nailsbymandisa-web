@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
-import { uploadImageFile } from '../../lib/uploadImage.js';
+import { uploadImageFile, uploadVideoFile } from '../../lib/uploadImage.js';
 import { Button, FormField, useToast } from '../../design-system';
 import './AdminPages.css';
 
-// The only home-page setting exposed here today is the hero background — see README
-// "Also surfaced while doing this" for the broader "no admin settings screen exists yet"
-// gap this page is a first, narrow instance of, not a full settings page.
+// The only home-page setting exposed here today is the hero — see README "Also surfaced
+// while doing this" for the broader "no admin settings screen exists yet" gap this page
+// is a first, narrow instance of, not a full settings page.
+//
+// The hero plays as a slideshow of these items in order, looping back to the first (see
+// HomePage.jsx's HeroSlideshow) — this page manages that list: add, remove, reorder.
 export function AdminHomepagePage() {
   const { showToast } = useToast();
-  const [current, setCurrent] = useState(null);
+  const [items, setItems] = useState(null);
+  const [persisting, setPersisting] = useState(false);
   const [mediaType, setMediaType] = useState('image');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [videoUrl, setVideoUrl] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', tiktok: '', twitter: '' });
   const [savingSocial, setSavingSocial] = useState(false);
 
@@ -22,13 +25,62 @@ export function AdminHomepagePage() {
     apiClient
       .get('/settings')
       .then(({ settings }) => {
-        setCurrent(settings.heroMedia);
-        setMediaType(settings.heroMedia?.type || 'image');
+        setItems(settings.heroMediaItems || []);
         setSocialLinks({ instagram: '', facebook: '', tiktok: '', twitter: '', ...settings.socialLinks });
       })
       .catch((err) => showToast(err.message || 'Could not load the current hero.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function persist(nextItems, successMessage) {
+    setPersisting(true);
+    try {
+      const { settings } = await apiClient.patch('/settings', { heroMediaItems: nextItems });
+      setItems(settings.heroMediaItems);
+      showToast(successMessage, { variant: 'success' });
+    } catch (err) {
+      showToast(err.message || 'Could not update the hero.', { variant: 'error' });
+    } finally {
+      setPersisting(false);
+    }
+  }
+
+  function handleFileChange(e) {
+    const selected = e.target.files?.[0] || null;
+    setFile(selected);
+    setPreview(selected ? URL.createObjectURL(selected) : null);
+  }
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    if (!file) {
+      showToast(mediaType === 'image' ? 'Choose a photo to upload.' : 'Choose a video to upload.', { variant: 'error' });
+      return;
+    }
+    setAdding(true);
+    try {
+      const url = mediaType === 'image' ? await uploadImageFile(file) : await uploadVideoFile(file);
+      await persist([...items, { url, type: mediaType }], 'Added to the hero slideshow.');
+      setFile(null);
+      setPreview(null);
+    } catch (err) {
+      showToast(err.message || 'Could not upload that file.', { variant: 'error' });
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  function handleRemove(index) {
+    persist(items.filter((_, i) => i !== index), 'Removed from the hero slideshow.');
+  }
+
+  function handleMove(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    persist(next, 'Reordered the hero slideshow.');
+  }
 
   async function handleSocialSubmit(e) {
     e.preventDefault();
@@ -43,46 +95,37 @@ export function AdminHomepagePage() {
     }
   }
 
-  function handleFileChange(e) {
-    const selected = e.target.files?.[0] || null;
-    setFile(selected);
-    setPreview(selected ? URL.createObjectURL(selected) : null);
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      const url = mediaType === 'image' ? (file ? await uploadImageFile(file) : current?.url) : videoUrl;
-      if (!url) throw new Error(mediaType === 'image' ? 'Choose a photo to upload.' : 'Enter a video URL.');
-      const { settings } = await apiClient.patch('/settings', { heroMedia: { url, type: mediaType } });
-      setCurrent(settings.heroMedia);
-      setFile(null);
-      setPreview(null);
-      setVideoUrl('');
-      showToast('Home page hero updated.', { variant: 'success' });
-    } catch (err) {
-      showToast(err.message || 'Could not update the hero.', { variant: 'error' });
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  if (!current) return <p>Loading&hellip;</p>;
+  if (!items) return <p>Loading&hellip;</p>;
 
   return (
     <div>
       <p className="admin-page__muted" style={{ marginBottom: 'var(--space-5)' }}>
-        Controls the large background at the top of the public home page.
+        Controls the large background at the top of the public home page. With more than
+        one item, it plays as a slideshow in this order, looping back to the start.
       </p>
 
-      {current.type === 'image' ? (
-        <img src={current.url} alt="Current hero" className="admin-homepage__current" />
-      ) : (
-        <video src={current.url} className="admin-homepage__current" autoPlay muted loop playsInline />
-      )}
+      <ul className="admin-homepage__slides">
+        {items.map((item, index) => (
+          <li key={item.url} className="admin-homepage__slide">
+            {item.type === 'image' ? (
+              <img src={item.url} alt={`Hero slide ${index + 1}`} className="admin-homepage__slide-thumb" />
+            ) : (
+              <video src={item.url} className="admin-homepage__slide-thumb" muted playsInline />
+            )}
+            <div className="admin-homepage__slide-meta">
+              <span>#{index + 1} · {item.type}</span>
+            </div>
+            <div className="admin-homepage__slide-actions">
+              <Button variant="secondary" size="sm" disabled={persisting || index === 0} onClick={() => handleMove(index, -1)}>↑</Button>
+              <Button variant="secondary" size="sm" disabled={persisting || index === items.length - 1} onClick={() => handleMove(index, 1)}>↓</Button>
+              <Button variant="danger" size="sm" disabled={persisting || items.length <= 1} onClick={() => handleRemove(index)}>Remove</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
 
-      <form onSubmit={handleSubmit} noValidate style={{ maxWidth: 480, marginTop: 'var(--space-5)' }}>
+      <h2 style={{ marginTop: 'var(--space-6)' }}>Add to the slideshow</h2>
+      <form onSubmit={handleAdd} noValidate style={{ maxWidth: 480, marginTop: 'var(--space-4)' }}>
         <FormField label="Media type" required>
           <select value={mediaType} onChange={(e) => { setMediaType(e.target.value); setFile(null); setPreview(null); }}>
             <option value="image">Image</option>
@@ -91,18 +134,22 @@ export function AdminHomepagePage() {
         </FormField>
 
         {mediaType === 'image' ? (
-          <FormField key="image" label="New photo" hint="JPEG, PNG, WEBP or GIF, up to 8MB. Leave empty to keep the current one.">
+          <FormField key="image" label="Photo" required hint="JPEG, PNG, WEBP or GIF, up to 8MB.">
             <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} />
           </FormField>
         ) : (
-          <FormField key="video" label="Video URL" required hint="A link to an already-hosted video file (e.g. an .mp4 you've uploaded elsewhere) — autoplays muted and looped, so keep it short.">
-            <input type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+          <FormField key="video" label="Video" required hint="MP4, WEBM or MOV, up to 50MB — autoplays muted, so keep it short.">
+            <input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={handleFileChange} />
           </FormField>
         )}
 
-        {preview && mediaType === 'image' && <img src={preview} alt="New photo preview" className="admin-homepage__preview" />}
+        {preview && (mediaType === 'image' ? (
+          <img src={preview} alt="New slide preview" className="admin-homepage__preview" />
+        ) : (
+          <video src={preview} className="admin-homepage__preview" autoPlay muted loop playsInline />
+        ))}
 
-        <Button type="submit" loading={submitting}>Save</Button>
+        <Button type="submit" loading={adding}>Add to slideshow</Button>
       </form>
 
       <h2 style={{ marginTop: 'var(--space-8)' }}>Social links</h2>

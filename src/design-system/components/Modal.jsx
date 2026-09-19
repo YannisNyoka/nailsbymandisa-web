@@ -12,6 +12,15 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
   const dialogRef = useRef(null);
   const titleId = useId();
   const previouslyFocused = useRef(null);
+  // Every call site passes an inline `onClose={() => ...}`, so its identity changes on
+  // every render of the parent — including every keystroke in a field inside this modal,
+  // since that updates the parent's form state. Reading it through a ref (always current,
+  // no effect re-run needed) instead of a dependency is what keeps the effect below from
+  // re-running on every keystroke — it used to, and its body steals focus to the dialog's
+  // first focusable element each time it reruns, which made typing anything in a modal
+  // form effectively impossible (§bug-fix, found via real admin usage).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -23,7 +32,7 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
 
     function onKeyDown(e) {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -45,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
       document.removeEventListener('keydown', onKeyDown);
       previouslyFocused.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
