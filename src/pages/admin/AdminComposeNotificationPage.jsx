@@ -67,6 +67,10 @@ export function AdminComposeNotificationPage() {
 
   return (
     <div>
+      <p className="admin-page__muted" style={{ marginBottom: 'var(--space-5)' }}>
+        Always delivered two ways: the client&rsquo;s in-app notification center and an
+        email. SMS is an optional extra, single-client only.
+      </p>
       <form onSubmit={handleSubmit} noValidate style={{ maxWidth: 480 }}>
         <FormField label="Send to">
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
@@ -136,7 +140,7 @@ export function AdminComposeNotificationPage() {
         onClose={() => setConfirmingBroadcast(false)}
         onConfirm={send}
         title="Broadcast to every client?"
-        summary={`This sends "${title}" to every active client's notification center. This can't be undone.`}
+        summary={`This sends "${title}" to every active client's notification center and email inbox. This can't be undone.`}
         confirmLabel="Send broadcast"
         danger
       />
