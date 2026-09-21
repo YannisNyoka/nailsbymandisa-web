@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Button, useToast } from '../../design-system';
 import './BookingConfirmationPage.css';
 
@@ -10,6 +11,7 @@ const MESSAGES = {
 };
 
 export function BookingPaymentRetryPage() {
+  useDocumentMeta('Payment not completed', null, { noindex: true });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const appointmentId = searchParams.get('appointmentId');

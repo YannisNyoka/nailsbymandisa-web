@@ -46,10 +46,11 @@
   max-width: 560px;
 }
 
-.home__hero p.home__hero-tagline {
+.home__hero h1.home__hero-tagline {
   color: var(--color-accent);
   font-size: var(--text-lg);
   font-family: var(--font-display);
+  font-weight: normal;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0 0 var(--space-3);
@@ -96,7 +97,7 @@
   .home__hero {
     min-height: 60vh;
   }
-  .home__hero p.home__hero-tagline {
+  .home__hero h1.home__hero-tagline {
     font-size: var(--text-base);
   }
   .home__hero-subtitle {

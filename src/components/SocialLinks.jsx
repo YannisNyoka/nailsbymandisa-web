@@ -42,6 +42,25 @@ export function SocialLinks({ className = '' }) {
       .catch(() => setLinks({}));
   }, []);
 
+  // Enriches the static NailSalon JSON-LD in index.html with live `sameAs` social
+  // profile URLs — that schema can't read live settings itself (it's static markup,
+  // not rendered), but this component already fetches them on every page via the
+  // shared Layout footer, so it's a convenient place to keep search engines' view of
+  // the business entity in sync without duplicating a second settings fetch.
+  useEffect(() => {
+    const urls = Object.values(links || {}).filter(Boolean);
+    if (!urls.length) return;
+    const script = document.querySelector('script[type="application/ld+json"]');
+    if (!script) return;
+    try {
+      const data = JSON.parse(script.textContent);
+      data.sameAs = urls;
+      script.textContent = JSON.stringify(data);
+    } catch {
+      // Static markup missing or malformed — nothing safe to enrich.
+    }
+  }, [links]);
+
   const entries = Object.entries(links || {}).filter(([, url]) => url);
   if (!entries.length) return null;
 

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useDocumentMeta } from '../lib/useDocumentMeta.js';
 import { Button } from '../design-system';
 import './NotFoundPage.css';
 
 export function NotFoundPage() {
+  useDocumentMeta('Page not found', null, { noindex: true });
   return (
     <div className="not-found-page">
       <p className="not-found-page__eyebrow">404</p>

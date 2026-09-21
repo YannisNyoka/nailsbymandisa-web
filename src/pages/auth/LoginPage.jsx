@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Button, FormField } from '../../design-system';
 import './AuthForm.css';
 
 export function LoginPage() {
+  useDocumentMeta('Log in', null, { noindex: true });
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

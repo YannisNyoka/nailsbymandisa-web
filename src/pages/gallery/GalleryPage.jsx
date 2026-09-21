@@ -10,7 +10,7 @@ import './GalleryPage.css';
 export function GalleryPage() {
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
-  useDocumentMeta('Gallery', "See NailsByMandisa's work and client before/after photos.");
+  useDocumentMeta('Gallery', "See NailsByMandisa's work and client before/after photos.", { path: '/gallery' });
   const [curated, setCurated] = useState(null);
   const [submissions, setSubmissions] = useState(null);
   const [likingId, setLikingId] = useState(null);

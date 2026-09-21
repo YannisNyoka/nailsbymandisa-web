@@ -22,7 +22,7 @@ export function BookingWizard() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  useDocumentMeta('Book an appointment', 'Book your manicure, pedicure, gel, acrylic or nail art appointment online.');
+  useDocumentMeta('Book an appointment', 'Book your manicure, pedicure, gel, acrylic or nail art appointment online.', { path: '/book' });
 
   const [stepIndex, setStepIndex] = useState(0);
   const [services, setServices] = useState(null);
@@ -196,6 +196,7 @@ export function BookingWizard() {
 
   return (
     <div className="booking-wizard">
+      <h1 className="booking-wizard__title">Book an appointment</h1>
       <ol className="booking-wizard__steps" aria-label="Booking progress">
         {STEPS.map((label, i) => (
           <li key={label} className={i === stepIndex ? 'booking-wizard__step--active' : i < stepIndex ? 'booking-wizard__step--done' : ''}>

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Button, FormField, useToast } from '../../design-system';
 import './AuthForm.css';
 
 export function RegisterPage() {
+  useDocumentMeta('Create your account', null, { noindex: true });
   const { register } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { useToast } from '../../design-system';
 import { Button, FormField } from '../../design-system';
 import './AuthForm.css';
 
 export function ResetPasswordPage() {
+  useDocumentMeta('Choose a new password', null, { noindex: true });
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import '../booking/BookingConfirmationPage.css';
 
 export function GiftCardConfirmationPage() {
+  useDocumentMeta('Gift card order received', null, { noindex: true });
   const { isAuthenticated } = useAuth();
 
   return (

@@ -14,7 +14,7 @@ const RETRY_MESSAGES = {
 
 export function GiftCardPurchasePage() {
   const { isAuthenticated, user } = useAuth();
-  useDocumentMeta('Gift cards', 'Buy a NailsByMandisa gift card for yourself or a friend.');
+  useDocumentMeta('Gift cards', 'Buy a NailsByMandisa gift card for yourself or a friend.', { path: '/gift-cards/purchase' });
   const [searchParams] = useSearchParams();
   const retryStatus = searchParams.get('status');
   const [amountRand, setAmountRand] = useState(String(PRESET_AMOUNTS_RAND[1]));

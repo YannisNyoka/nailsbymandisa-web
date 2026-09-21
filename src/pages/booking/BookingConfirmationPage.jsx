@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/apiClient.js';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Button } from '../../design-system';
 import './BookingConfirmationPage.css';
 
@@ -243,6 +244,7 @@ function PaymentReceipt({ appointment, services, staff, payment, settings }) {
 }
 
 export function BookingConfirmationPage() {
+  useDocumentMeta('Booking confirmation', null, { noindex: true });
   const [searchParams] = useSearchParams();
   const appointmentId = searchParams.get('appointmentId');
   const { isAuthenticated, loading: authLoading } = useAuth();

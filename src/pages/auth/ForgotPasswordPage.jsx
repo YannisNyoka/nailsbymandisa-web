@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Button, FormField } from '../../design-system';
 import './AuthForm.css';
 
 export function ForgotPasswordPage() {
+  useDocumentMeta('Reset your password', null, { noindex: true });
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);

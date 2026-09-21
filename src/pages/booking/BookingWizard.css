@@ -3,6 +3,13 @@
   margin: 0 auto;
 }
 
+.booking-wizard__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  text-align: center;
+  margin: 0 0 var(--space-5);
+}
+
 .booking-wizard__steps {
   display: flex;
   list-style: none;

@@ -17,7 +17,7 @@ const WEEKDAYS = [
 ];
 
 export function ContactPage() {
-  useDocumentMeta('Contact us', 'Get in touch with NailsByMandisa — ask a question, request a custom look, or just say hi.');
+  useDocumentMeta('Contact us', 'Get in touch with NailsByMandisa — ask a question, request a custom look, or just say hi.', { path: '/contact' });
   const { showToast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

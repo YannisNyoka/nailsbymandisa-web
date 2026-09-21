@@ -120,7 +120,7 @@ export function HomePage() {
   const [heroMediaItems, setHeroMediaItems] = useState(FALLBACK_HERO_MEDIA_ITEMS);
   const [workItems, setWorkItems] = useState(null);
   const [settings, setSettings] = useState(null);
-  useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.');
+  useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.', { path: '/' });
 
   useEffect(() => {
     apiClient
@@ -153,7 +153,7 @@ export function HomePage() {
           <div className="home__hero-overlay" />
         </div>
         <div className="home__hero-content">
-          <p className="home__hero-tagline">Clean. Chic. Creative.</p>
+          <h1 className="home__hero-tagline">Clean. Chic. Creative.</h1>
           <p className="home__hero-subtitle">Manicures, pedicures, gel, acrylic, polygel &amp; nail art — booked online.</p>
           <div className="home__hero-actions">
             <Link className="home__cta home__cta--primary" to="/book">
@@ -168,7 +168,7 @@ export function HomePage() {
 
       {workItems && workItems.length > 0 && (
         <section className="home__work">
-          <h1 className="home__work-eyebrow">Our work</h1>
+          <h2 className="home__work-eyebrow">Our work</h2>
         
           <p className="home__work-subtitle">Swipe to explore our gallery</p>
           <div className="home__work-scroller">
@@ -202,7 +202,7 @@ export function HomePage() {
               <li key={s._id}>
                 <Link to={`/book?service=${s._id}`} className="home__service">
                   {s.imageUrl ? (
-                    <img src={optimizedImageUrl(s.imageUrl, { width: 120 })} alt="" className="home__service-image" />
+                    <img src={optimizedImageUrl(s.imageUrl, { width: 120 })} alt={s.name} className="home__service-image" />
                   ) : (
                     <span className="home__service-image home__service-image--empty" aria-hidden="true" />
                   )}

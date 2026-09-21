@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile } from '../../lib/uploadImage.js';
+import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Badge, Button, FormField, useToast } from '../../design-system';
 import '../account/AccountPages.css';
 
 const STATUS_VARIANT = { pending: 'warning', approved: 'success', rejected: 'danger' };
 
 export function SubmitPhotoPage() {
+  useDocumentMeta('Submit a photo', null, { noindex: true });
   const { showToast } = useToast();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
