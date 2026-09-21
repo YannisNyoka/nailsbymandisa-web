@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient.js';
 import { Button, FormField, useToast } from '../design-system';
 import { useDocumentMeta } from '../lib/useDocumentMeta.js';
+import { formatHour } from '../lib/formatTime.js';
 import './ContactPage.css';
+
+const WEEKDAYS = [
+  ['mon', 'Mon'],
+  ['tue', 'Tue'],
+  ['wed', 'Wed'],
+  ['thu', 'Thu'],
+  ['fri', 'Fri'],
+  ['sat', 'Sat'],
+  ['sun', 'Sun'],
+];
 
 export function ContactPage() {
   useDocumentMeta('Contact us', 'Get in touch with NailsByMandisa — ask a question, request a custom look, or just say hi.');
@@ -13,6 +24,14 @@ export function ContactPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    apiClient
+      .get('/settings')
+      .then(({ settings: s }) => setSettings(s))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -59,11 +78,48 @@ export function ContactPage() {
             </form>
           </>
         )}
-        <div className="contact-page__direct">
-          <p>Prefer to reach us directly?</p>
-          <a href="tel:+27766878843">076 687 8843</a>
-          <a href="mailto:nailsbymandisa@gmail.com">nailsbymandisa@gmail.com</a>
-        </div>
+        {settings && (
+          <div className="contact-page__direct">
+            <p>Prefer to reach us directly?</p>
+            <a href={`tel:${settings.contact.phone}`}>{settings.contact.phone}</a>
+            <a href={`mailto:${settings.contact.email}`}>{settings.contact.email}</a>
+          </div>
+        )}
+
+        {settings && (
+          <section className="contact-page__policy">
+            <h2>Cancellation Policy</h2>
+            <p>
+              We ask that you give us at least {settings.cancellationNoticeHours} hours&rsquo; notice if you need
+              to cancel or reschedule your appointment.
+            </p>
+          </section>
+        )}
+
+        {settings && (
+          <section className="contact-page__hours">
+            <div>
+              <h2>{settings.businessName}</h2>
+              <a href={`tel:${settings.contact.phone}`}>{settings.contact.phone}</a>
+              <p className="contact-page__address">{settings.contact.address}</p>
+            </div>
+            <div>
+              <h2>Hours</h2>
+              <dl>
+                {WEEKDAYS.map(([key, label]) => (
+                  <div key={key} className="contact-page__hours-row">
+                    <dt>{label}</dt>
+                    <dd>
+                      {settings.hours[key].closed
+                        ? 'Closed'
+                        : `${formatHour(settings.hours[key].open)} – ${formatHour(settings.hours[key].close)}`}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

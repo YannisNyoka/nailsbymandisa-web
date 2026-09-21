@@ -2,7 +2,50 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient.js';
 import { useDocumentMeta } from '../lib/useDocumentMeta.js';
+import { formatHour } from '../lib/formatTime.js';
+import { buildWhatsAppLink } from '../lib/whatsapp.js';
 import './HomePage.css';
+
+const WEEKDAY_LABELS = [
+  ['mon', 'Monday'],
+  ['tue', 'Tuesday'],
+  ['wed', 'Wednesday'],
+  ['thu', 'Thursday'],
+  ['fri', 'Friday'],
+  ['sat', 'Saturday'],
+  ['sun', 'Sunday'],
+];
+
+// Condenses the full weekly schedule (settings.hours) into the compact "Sunday –
+// Friday" / "9:00 am – 5:00 pm" shape a teaser card needs — the Contact page has the
+// full day-by-day table this links out to for anyone whose hours genuinely vary by day.
+function summarizeHours(hours) {
+  const order = WEEKDAY_LABELS.map(([key]) => key);
+  const labelOf = (key) => WEEKDAY_LABELS.find(([k]) => k === key)[1];
+  const openSet = new Set(order.filter((key) => !hours[key].closed));
+  if (openSet.size === 0) return { days: 'Closed', time: '' };
+
+  const first = hours[order.find((key) => openSet.has(key))];
+  const sameEveryDay = [...openSet].every((key) => hours[key].open === first.open && hours[key].close === first.close);
+  const time = sameEveryDay ? `${formatHour(first.open)} – ${formatHour(first.close)}` : 'Varies by day';
+
+  if (openSet.size === order.length) return { days: 'Every day', time };
+
+  // A week wraps (e.g. open Sunday–Friday, closed only Saturday — not a "linear" range
+  // in Mon..Sun order), so try every rotation and use whichever one turns the open days
+  // into a clean unbroken prefix run.
+  for (let start = 0; start < order.length; start += 1) {
+    const rotated = [...order.slice(start), ...order.slice(0, start)];
+    const runLength = rotated.findIndex((key) => !openSet.has(key));
+    const effectiveRun = runLength === -1 ? rotated.length : runLength;
+    if (effectiveRun === openSet.size) {
+      const days = effectiveRun === 1 ? labelOf(rotated[0]) : `${labelOf(rotated[0])} – ${labelOf(rotated[effectiveRun - 1])}`;
+      return { days, time };
+    }
+  }
+
+  return { days: order.filter((key) => openSet.has(key)).map(labelOf).join(', '), time };
+}
 
 // Matches api/src/models/settings.js DEFAULT_SETTINGS.heroMediaItems — used only until
 // the real value loads from GET /api/settings, so there's no flash of an empty hero.
@@ -70,6 +113,7 @@ export function HomePage() {
   const [services, setServices] = useState(null);
   const [heroMediaItems, setHeroMediaItems] = useState(FALLBACK_HERO_MEDIA_ITEMS);
   const [workItems, setWorkItems] = useState(null);
+  const [settings, setSettings] = useState(null);
   useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.');
 
   useEffect(() => {
@@ -79,8 +123,9 @@ export function HomePage() {
       .catch(() => setServices([]));
     apiClient
       .get('/settings')
-      .then(({ settings }) => {
-        if (settings.heroMediaItems?.length) setHeroMediaItems(settings.heroMediaItems);
+      .then(({ settings: s }) => {
+        if (s.heroMediaItems?.length) setHeroMediaItems(s.heroMediaItems);
+        setSettings(s);
       })
       .catch(() => {});
     Promise.all([apiClient.get('/gallery'), apiClient.get('/client-gallery')])
@@ -91,6 +136,8 @@ export function HomePage() {
       })
       .catch(() => setWorkItems([]));
   }, []);
+
+  const hoursSummary = settings ? summarizeHours(settings.hours) : null;
 
   return (
     <main className="home">
@@ -119,21 +166,23 @@ export function HomePage() {
         
           <p className="home__work-subtitle">Swipe to explore our gallery</p>
           <div className="home__work-scroller">
-            {workItems.map((item) => (
-              <Link key={item.id} to="/gallery" className="home__work-card">
-                <div className="home__work-card-media">
-                  {item.type === 'video' ? (
-                    <>
-                      <video src={item.url} muted preload="metadata" aria-hidden="true" />
-                      <span className="home__work-card-play" aria-hidden="true">&#9654;</span>
-                    </>
-                  ) : (
-                    <img src={item.url} alt={item.caption || 'NailsByMandisa client work'} />
-                  )}
-                </div>
-                <p className="home__work-card-caption">{item.caption || 'Our work'}</p>
-              </Link>
-            ))}
+            <div className="home__work-scroller-inner">
+              {workItems.map((item) => (
+                <Link key={item.id} to="/gallery" className="home__work-card">
+                  <div className="home__work-card-media">
+                    {item.type === 'video' ? (
+                      <>
+                        <video src={item.url} muted preload="metadata" aria-hidden="true" />
+                        <span className="home__work-card-play" aria-hidden="true">&#9654;</span>
+                      </>
+                    ) : (
+                      <img src={item.url} alt={item.caption || 'NailsByMandisa client work'} />
+                    )}
+                  </div>
+                  <p className="home__work-card-caption">{item.caption || 'Our work'}</p>
+                </Link>
+              ))}
+            </div>
           </div>
           <p className="home__work-swipe-hint">&larr; swipe to see more &rarr;</p>
         </section>
@@ -161,6 +210,84 @@ export function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {settings && (
+        <section className="home__contact">
+          <p className="home__contact-eyebrow">Find us</p>
+          <h2 className="home__contact-title">Get in touch</h2>
+          <div className="home__contact-scroller">
+            <div className="home__contact-scroller-inner">
+              <div className="home__contact-card">
+                <span className="home__contact-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </span>
+                <h3>Location</h3>
+                <p>{settings.contact.address}</p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.contact.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Get Directions &rarr;
+                </a>
+              </div>
+
+              <div className="home__contact-card">
+                <span className="home__contact-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </span>
+                <h3>Hours</h3>
+                <p>
+                  {hoursSummary.days}
+                  {hoursSummary.time && (
+                    <>
+                      <br />
+                      {hoursSummary.time}
+                    </>
+                  )}
+                </p>
+                <Link to="/book">Book Now &rarr;</Link>
+              </div>
+
+              <div className="home__contact-card">
+                <span className="home__contact-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                </span>
+                <h3>Call or WhatsApp</h3>
+                <p>{settings.contact.phone}</p>
+                <a
+                  href={buildWhatsAppLink(settings.contact.whatsapp, 'Hi! I have a question about booking with NailsByMandisa.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp Us &rarr;
+                </a>
+              </div>
+
+              <div className="home__contact-card">
+                <span className="home__contact-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22 6 12 13 2 6" />
+                  </svg>
+                </span>
+                <h3>Email</h3>
+                <p>{settings.contact.email}</p>
+                <a href={`mailto:${settings.contact.email}`}>Send Email &rarr;</a>
+              </div>
+            </div>
+          </div>
+          <p className="home__contact-swipe-hint">&larr; swipe to see more &rarr;</p>
         </section>
       )}
     </main>

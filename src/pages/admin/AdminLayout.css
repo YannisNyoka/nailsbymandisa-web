@@ -17,6 +17,11 @@
   flex: 0 0 220px;
   position: sticky;
   top: var(--space-5);
+  /* Enough nav items now (16+) that this can be taller than the viewport — without a
+     cap the sidebar just grows past the screen with no way to reach "Log out" at the
+     bottom. Capped to the viewport so the links list scrolls internally instead, while
+     the header and footer (Back to site / Log out) stay pinned and always reachable. */
+  max-height: calc(100vh - var(--space-5) * 2);
   background: var(--color-ink);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
@@ -47,6 +52,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  overflow-y: auto;
+  /* A flex child won't shrink below its content's natural height by default (min-height:
+     auto), which would silently defeat overflow-y: auto here and just push the parent's
+     max-height instead — this is what actually lets the list scroll in the leftover
+     space between the header and footer. */
+  min-height: 0;
 }
 
 .admin-layout__nav-link {
@@ -185,9 +196,16 @@
     display: none;
     position: static;
     width: 100%;
+    /* Not sticky here, so the page itself already scrolls normally when this is open —
+       an internally-scrolling links list on top of that would be a nested scroll area,
+       worse on touch than just letting the page scroll. */
+    max-height: none;
   }
   .admin-layout__nav--open {
     display: flex;
+  }
+  .admin-layout__nav-links {
+    overflow-y: visible;
   }
 
   .admin-top-bar__user {

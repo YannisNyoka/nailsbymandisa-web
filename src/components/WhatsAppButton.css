@@ -2,16 +2,56 @@
   position: fixed;
   bottom: var(--space-5);
   right: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
   background: #25d366;
-  color: #ffffff;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-full);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: var(--text-sm);
+  border-radius: 50%;
   box-shadow: var(--shadow-md);
   z-index: 900;
+  transition: transform 0.15s ease;
 }
-.whatsapp-button:hover {
-  opacity: 0.9;
+.whatsapp-button:hover,
+.whatsapp-button:focus-visible {
+  transform: scale(1.06);
+}
+
+.whatsapp-button__icon {
+  width: 30px;
+  height: 30px;
+  color: #ffffff;
+}
+
+/* Matches nxlbeautybar.co.za's reference: a dark bubble above the button, right-aligned,
+   with a small downward-pointing triangle — shown on hover/focus, not always-on. */
+.whatsapp-button__tooltip {
+  position: absolute;
+  bottom: calc(100% + var(--space-3));
+  right: 0;
+  background: #111111;
+  color: #ffffff;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.whatsapp-button__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: var(--space-4);
+  border: 6px solid transparent;
+  border-top-color: #111111;
+}
+.whatsapp-button:hover .whatsapp-button__tooltip,
+.whatsapp-button:focus-visible .whatsapp-button__tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }

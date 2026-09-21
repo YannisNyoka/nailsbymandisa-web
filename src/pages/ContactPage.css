@@ -87,3 +87,74 @@
   color: var(--color-accent);
   font-weight: 600;
 }
+
+.contact-page__policy {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.contact-page__policy h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-3);
+}
+
+.contact-page__policy p {
+  color: var(--color-text-muted);
+}
+
+.contact-page__hours {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.contact-page__hours h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-3);
+}
+
+.contact-page__hours a {
+  display: block;
+  color: var(--color-accent);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.contact-page__address {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.contact-page__hours dl {
+  margin: 0;
+}
+
+.contact-page__hours-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+}
+
+.contact-page__hours-row dt {
+  font-weight: 600;
+}
+
+.contact-page__hours-row dd {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 560px) {
+  .contact-page__hours {
+    grid-template-columns: 1fr;
+  }
+}

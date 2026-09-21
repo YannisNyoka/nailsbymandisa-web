@@ -122,21 +122,6 @@ export function AdminOverviewPage() {
           </div>
         </div>
       )}
-
-      {!isStaff && (
-        <>
-          <h2>Recent activity</h2>
-          <ul className="activity-feed">
-            {stats.recentActivity.length === 0 && <li>No activity yet.</li>}
-            {stats.recentActivity.map((entry) => (
-              <li key={entry._id}>
-                {entry.message}
-                <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
     </div>
   );
 }

@@ -134,12 +134,20 @@
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
-  display: flex;
-  gap: var(--space-4);
   overflow-x: auto;
   padding: 0 var(--space-5) var(--space-4);
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+}
+/* min-width: 100% + justify-content: center means: fewer cards than fit the viewport ->
+   centered as a group (not stuck against the left edge with empty space on the right);
+   enough cards to overflow -> this has no effect and the row scrolls normally from its
+   natural start, so swiping still works exactly the same either way. */
+.home__work-scroller-inner {
+  display: flex;
+  gap: var(--space-4);
+  min-width: 100%;
+  justify-content: center;
 }
 
 .home__work-card {
@@ -186,6 +194,96 @@
 }
 
 .home__work-swipe-hint {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.home__contact {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) 0 0;
+  text-align: center;
+}
+.home__contact-eyebrow {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+.home__contact-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-6);
+}
+
+/* Same bleed-to-viewport + scroll-snap technique as .home__work-scroller, including the
+   centered-when-it-fits / scrollable-when-it-doesn't inner wrapper (only 4 fixed-width
+   cards here, so on a wide screen they don't fill 100vw on their own). */
+.home__contact-scroller {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  overflow-x: auto;
+  padding: 0 var(--space-5) var(--space-4);
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.home__contact-scroller-inner {
+  display: flex;
+  gap: var(--space-4);
+  min-width: 100%;
+  justify-content: center;
+}
+
+.home__contact-card {
+  flex: 0 0 230px;
+  scroll-snap-align: start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-5);
+  text-align: left;
+}
+.home__contact-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  margin-bottom: var(--space-4);
+}
+.home__contact-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+.home__contact-card h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-2);
+}
+.home__contact-card p {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-4);
+  line-height: 1.5;
+}
+.home__contact-card a {
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+.home__contact-card a:hover {
+  text-decoration: underline;
+}
+
+.home__contact-swipe-hint {
   text-align: center;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
