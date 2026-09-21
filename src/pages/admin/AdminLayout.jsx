@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { AdminTopBar } from './AdminTopBar.jsx';
+import { RouteLoading } from '../../components/RouteLoading.jsx';
 import './AdminLayout.css';
 
 // Flat list (no category grouping) to match the reference dashboard's sidebar — icons are
@@ -89,7 +90,9 @@ export function AdminLayout() {
       <div className="admin-layout__content">
         <AdminTopBar title={activeItem?.label || 'Admin'} />
         <div className="admin-layout__page">
-          <Outlet />
+          <Suspense fallback={<RouteLoading />}>
+            <Outlet />
+          </Suspense>
         </div>
       </div>
     </div>

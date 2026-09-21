@@ -4,6 +4,7 @@ import { apiClient } from '../lib/apiClient.js';
 import { useDocumentMeta } from '../lib/useDocumentMeta.js';
 import { formatHour } from '../lib/formatTime.js';
 import { buildWhatsAppLink } from '../lib/whatsapp.js';
+import { optimizedImageUrl, optimizedVideoUrl } from '../lib/cloudinaryUrl.js';
 import './HomePage.css';
 
 const WEEKDAY_LABELS = [
@@ -86,7 +87,7 @@ function HeroSlideshow({ items }) {
     <video
       key={current.url}
       className="home__hero-media-el"
-      src={current.url}
+      src={optimizedVideoUrl(current.url, { width: 1920 })}
       autoPlay
       muted
       loop={items.length <= 1}
@@ -95,7 +96,12 @@ function HeroSlideshow({ items }) {
       aria-hidden="true"
     />
   ) : (
-    <img key={current.url} className="home__hero-media-el" src={current.url} alt="Freshly done nails by NailsByMandisa" />
+    <img
+      key={current.url}
+      className="home__hero-media-el"
+      src={optimizedImageUrl(current.url, { width: 1920 })}
+      alt="Freshly done nails by NailsByMandisa"
+    />
   );
 }
 
@@ -172,11 +178,11 @@ export function HomePage() {
                   <div className="home__work-card-media">
                     {item.type === 'video' ? (
                       <>
-                        <video src={item.url} muted preload="metadata" aria-hidden="true" />
+                        <video src={optimizedVideoUrl(item.url, { width: 440 })} muted preload="metadata" aria-hidden="true" />
                         <span className="home__work-card-play" aria-hidden="true">&#9654;</span>
                       </>
                     ) : (
-                      <img src={item.url} alt={item.caption || 'NailsByMandisa client work'} />
+                      <img src={optimizedImageUrl(item.url, { width: 440 })} alt={item.caption || 'NailsByMandisa client work'} />
                     )}
                   </div>
                   <p className="home__work-card-caption">{item.caption || 'Our work'}</p>
@@ -196,7 +202,7 @@ export function HomePage() {
               <li key={s._id}>
                 <Link to={`/book?service=${s._id}`} className="home__service">
                   {s.imageUrl ? (
-                    <img src={s.imageUrl} alt="" className="home__service-image" />
+                    <img src={optimizedImageUrl(s.imageUrl, { width: 120 })} alt="" className="home__service-image" />
                   ) : (
                     <span className="home__service-image home__service-image--empty" aria-hidden="true" />
                   )}

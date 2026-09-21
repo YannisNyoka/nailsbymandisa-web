@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile, uploadVideoFile } from '../../lib/uploadImage.js';
+import { optimizedImageUrl, optimizedVideoUrl } from '../../lib/cloudinaryUrl.js';
 import { Button, FormField, useToast } from '../../design-system';
 import './AdminPages.css';
 
@@ -110,9 +111,9 @@ export function AdminHomepagePage() {
         {items.map((item, index) => (
           <li key={item.url} className="admin-homepage__slide">
             {item.type === 'image' ? (
-              <img src={item.url} alt={`Hero slide ${index + 1}`} className="admin-homepage__slide-thumb" />
+              <img src={optimizedImageUrl(item.url, { width: 300 })} alt={`Hero slide ${index + 1}`} className="admin-homepage__slide-thumb" />
             ) : (
-              <video src={item.url} className="admin-homepage__slide-thumb" muted playsInline />
+              <video src={optimizedVideoUrl(item.url, { width: 300 })} className="admin-homepage__slide-thumb" muted playsInline />
             )}
             <div className="admin-homepage__slide-meta">
               <span>#{index + 1} · {item.type}</span>

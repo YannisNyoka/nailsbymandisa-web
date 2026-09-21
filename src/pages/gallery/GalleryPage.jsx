@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/apiClient.js';
 import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { useToast } from '../../design-system';
+import { optimizedImageUrl, optimizedVideoUrl } from '../../lib/cloudinaryUrl.js';
 import './GalleryPage.css';
 
 export function GalleryPage() {
@@ -77,9 +78,9 @@ export function GalleryPage() {
         {curated.map((item) => (
           <figure key={item._id} className="gallery-tile">
             {item.mediaType === 'video' ? (
-              <video src={item.mediaUrl} controls />
+              <video src={optimizedVideoUrl(item.mediaUrl, { width: 800 })} controls />
             ) : (
-              <img src={item.mediaUrl} alt={item.caption || 'NailsByMandisa gallery photo'} />
+              <img src={optimizedImageUrl(item.mediaUrl, { width: 800 })} alt={item.caption || 'NailsByMandisa gallery photo'} />
             )}
             {item.caption && <figcaption>{item.caption}</figcaption>}
             <button
@@ -95,7 +96,7 @@ export function GalleryPage() {
         ))}
         {submissions.map((item) => (
           <figure key={item._id} className="gallery-tile">
-            <img src={item.imageUrl} alt={item.caption || 'Client before/after photo'} />
+            <img src={optimizedImageUrl(item.imageUrl, { width: 800 })} alt={item.caption || 'Client before/after photo'} />
             {item.caption && <figcaption>{item.caption}</figcaption>}
             <button
               type="button"

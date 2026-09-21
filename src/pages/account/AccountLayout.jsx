@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { RouteLoading } from '../../components/RouteLoading.jsx';
 import './AccountLayout.css';
 
 const ACCOUNT_NAV_ITEMS = [
@@ -29,7 +31,9 @@ export function AccountLayout() {
           </NavLink>
         ))}
       </nav>
-      <Outlet />
+      <Suspense fallback={<RouteLoading />}>
+        <Outlet />
+      </Suspense>
     </div>
   );
 }

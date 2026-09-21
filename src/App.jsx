@@ -1,47 +1,62 @@
+import { lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { AdminRoute } from './components/AdminRoute.jsx';
-import { HomePage } from './pages/HomePage.jsx';
-import { BookingWizard } from './pages/booking/BookingWizard.jsx';
-import { BookingConfirmationPage } from './pages/booking/BookingConfirmationPage.jsx';
-import { BookingPaymentRetryPage } from './pages/booking/BookingPaymentRetryPage.jsx';
-import { LoginPage } from './pages/auth/LoginPage.jsx';
-import { RegisterPage } from './pages/auth/RegisterPage.jsx';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage.jsx';
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage.jsx';
 import { AccountLayout } from './pages/account/AccountLayout.jsx';
-import { ProfilePage } from './pages/account/ProfilePage.jsx';
-import { BookingsPage } from './pages/account/BookingsPage.jsx';
-import { NotificationsPage } from './pages/account/NotificationsPage.jsx';
-import { LoyaltyPage } from './pages/account/LoyaltyPage.jsx';
-import { ReferralsPage } from './pages/account/ReferralsPage.jsx';
 import { AdminLayout } from './pages/admin/AdminLayout.jsx';
-import { AdminOverviewPage } from './pages/admin/AdminOverviewPage.jsx';
-import { AdminAppointmentsPage } from './pages/admin/AdminAppointmentsPage.jsx';
-import { AdminClientsPage } from './pages/admin/AdminClientsPage.jsx';
-import { AdminClientDetailPage } from './pages/admin/AdminClientDetailPage.jsx';
-import { AdminServicesPage } from './pages/admin/AdminServicesPage.jsx';
-import { AdminStaffPage } from './pages/admin/AdminStaffPage.jsx';
-import { AdminAvailabilityPage } from './pages/admin/AdminAvailabilityPage.jsx';
-import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage.jsx';
-import { AdminActivityPage } from './pages/admin/AdminActivityPage.jsx';
-import { AdminDiscountCodesPage } from './pages/admin/AdminDiscountCodesPage.jsx';
-import { AdminGiftCardsPage } from './pages/admin/AdminGiftCardsPage.jsx';
-import { GiftCardPurchasePage } from './pages/giftcards/GiftCardPurchasePage.jsx';
-import { GiftCardConfirmationPage } from './pages/giftcards/GiftCardConfirmationPage.jsx';
-import { GiftCardsPage } from './pages/account/GiftCardsPage.jsx';
-import { GalleryPage } from './pages/gallery/GalleryPage.jsx';
-import { SubmitPhotoPage } from './pages/gallery/SubmitPhotoPage.jsx';
-import { AdminGalleryPage } from './pages/admin/AdminGalleryPage.jsx';
-import { AdminGalleryModerationPage } from './pages/admin/AdminGalleryModerationPage.jsx';
-import { AdminComposeNotificationPage } from './pages/admin/AdminComposeNotificationPage.jsx';
-import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx';
-import { AdminSchedulePage } from './pages/admin/AdminSchedulePage.jsx';
-import { AdminHomepagePage } from './pages/admin/AdminHomepagePage.jsx';
-import { AdminEnquiriesPage } from './pages/admin/AdminEnquiriesPage.jsx';
-import { ContactPage } from './pages/ContactPage.jsx';
-import { NotFoundPage } from './pages/NotFoundPage.jsx';
+
+// Every page below used to be a static import, so a first-time visitor loading the home
+// page downloaded the entire app in one bundle — all 17 admin pages, the PDF-export
+// libraries (jsPDF + autotable, only ever used by AdminAppointmentsPage), everything.
+// React.lazy splits each page into its own chunk, fetched only when its route is
+// actually visited — Layout.jsx/AccountLayout.jsx/AdminLayout.jsx wrap their <Outlet />
+// in <Suspense> so this shows a brief loading state in just the content area, not a
+// full-page flash. These loaders use named exports (not default), so each needs the
+// `.then(m => ({ default: m.X }))` adapter — `React.lazy` only accepts a promise that
+// resolves to a `default` export.
+function lazyNamed(loader, name) {
+  return lazy(() => loader().then((m) => ({ default: m[name] })));
+}
+
+const HomePage = lazyNamed(() => import('./pages/HomePage.jsx'), 'HomePage');
+const BookingWizard = lazyNamed(() => import('./pages/booking/BookingWizard.jsx'), 'BookingWizard');
+const BookingConfirmationPage = lazyNamed(() => import('./pages/booking/BookingConfirmationPage.jsx'), 'BookingConfirmationPage');
+const BookingPaymentRetryPage = lazyNamed(() => import('./pages/booking/BookingPaymentRetryPage.jsx'), 'BookingPaymentRetryPage');
+const LoginPage = lazyNamed(() => import('./pages/auth/LoginPage.jsx'), 'LoginPage');
+const RegisterPage = lazyNamed(() => import('./pages/auth/RegisterPage.jsx'), 'RegisterPage');
+const ForgotPasswordPage = lazyNamed(() => import('./pages/auth/ForgotPasswordPage.jsx'), 'ForgotPasswordPage');
+const ResetPasswordPage = lazyNamed(() => import('./pages/auth/ResetPasswordPage.jsx'), 'ResetPasswordPage');
+const ProfilePage = lazyNamed(() => import('./pages/account/ProfilePage.jsx'), 'ProfilePage');
+const BookingsPage = lazyNamed(() => import('./pages/account/BookingsPage.jsx'), 'BookingsPage');
+const NotificationsPage = lazyNamed(() => import('./pages/account/NotificationsPage.jsx'), 'NotificationsPage');
+const LoyaltyPage = lazyNamed(() => import('./pages/account/LoyaltyPage.jsx'), 'LoyaltyPage');
+const ReferralsPage = lazyNamed(() => import('./pages/account/ReferralsPage.jsx'), 'ReferralsPage');
+const AdminOverviewPage = lazyNamed(() => import('./pages/admin/AdminOverviewPage.jsx'), 'AdminOverviewPage');
+const AdminAppointmentsPage = lazyNamed(() => import('./pages/admin/AdminAppointmentsPage.jsx'), 'AdminAppointmentsPage');
+const AdminClientsPage = lazyNamed(() => import('./pages/admin/AdminClientsPage.jsx'), 'AdminClientsPage');
+const AdminClientDetailPage = lazyNamed(() => import('./pages/admin/AdminClientDetailPage.jsx'), 'AdminClientDetailPage');
+const AdminServicesPage = lazyNamed(() => import('./pages/admin/AdminServicesPage.jsx'), 'AdminServicesPage');
+const AdminStaffPage = lazyNamed(() => import('./pages/admin/AdminStaffPage.jsx'), 'AdminStaffPage');
+const AdminAvailabilityPage = lazyNamed(() => import('./pages/admin/AdminAvailabilityPage.jsx'), 'AdminAvailabilityPage');
+const AdminPaymentsPage = lazyNamed(() => import('./pages/admin/AdminPaymentsPage.jsx'), 'AdminPaymentsPage');
+const AdminActivityPage = lazyNamed(() => import('./pages/admin/AdminActivityPage.jsx'), 'AdminActivityPage');
+const AdminDiscountCodesPage = lazyNamed(() => import('./pages/admin/AdminDiscountCodesPage.jsx'), 'AdminDiscountCodesPage');
+const AdminGiftCardsPage = lazyNamed(() => import('./pages/admin/AdminGiftCardsPage.jsx'), 'AdminGiftCardsPage');
+const GiftCardPurchasePage = lazyNamed(() => import('./pages/giftcards/GiftCardPurchasePage.jsx'), 'GiftCardPurchasePage');
+const GiftCardConfirmationPage = lazyNamed(() => import('./pages/giftcards/GiftCardConfirmationPage.jsx'), 'GiftCardConfirmationPage');
+const GiftCardsPage = lazyNamed(() => import('./pages/account/GiftCardsPage.jsx'), 'GiftCardsPage');
+const GalleryPage = lazyNamed(() => import('./pages/gallery/GalleryPage.jsx'), 'GalleryPage');
+const SubmitPhotoPage = lazyNamed(() => import('./pages/gallery/SubmitPhotoPage.jsx'), 'SubmitPhotoPage');
+const AdminGalleryPage = lazyNamed(() => import('./pages/admin/AdminGalleryPage.jsx'), 'AdminGalleryPage');
+const AdminGalleryModerationPage = lazyNamed(() => import('./pages/admin/AdminGalleryModerationPage.jsx'), 'AdminGalleryModerationPage');
+const AdminComposeNotificationPage = lazyNamed(() => import('./pages/admin/AdminComposeNotificationPage.jsx'), 'AdminComposeNotificationPage');
+const AdminUsersPage = lazyNamed(() => import('./pages/admin/AdminUsersPage.jsx'), 'AdminUsersPage');
+const AdminSchedulePage = lazyNamed(() => import('./pages/admin/AdminSchedulePage.jsx'), 'AdminSchedulePage');
+const AdminHomepagePage = lazyNamed(() => import('./pages/admin/AdminHomepagePage.jsx'), 'AdminHomepagePage');
+const AdminEnquiriesPage = lazyNamed(() => import('./pages/admin/AdminEnquiriesPage.jsx'), 'AdminEnquiriesPage');
+const ContactPage = lazyNamed(() => import('./pages/ContactPage.jsx'), 'ContactPage');
+const NotFoundPage = lazyNamed(() => import('./pages/NotFoundPage.jsx'), 'NotFoundPage');
 
 // More routes land here as each build-order step reaches the frontend: PWA install,
 // SEO.

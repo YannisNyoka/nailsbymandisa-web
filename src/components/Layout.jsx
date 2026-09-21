@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '../design-system';
@@ -6,6 +6,7 @@ import { WhatsAppButton } from './WhatsAppButton.jsx';
 import { InstallPrompt } from './InstallPrompt.jsx';
 import { SocialLinks } from './SocialLinks.jsx';
 import { NotificationBell } from './NotificationBell.jsx';
+import { RouteLoading } from './RouteLoading.jsx';
 import './Layout.css';
 
 const YEAR = new Date().getFullYear();
@@ -82,7 +83,9 @@ export function Layout() {
         </nav>
       </header>
       <main className="layout__main">
-        <Outlet />
+        <Suspense fallback={<RouteLoading />}>
+          <Outlet />
+        </Suspense>
       </main>
       <footer className="layout__footer">
         <div className="layout__footer-brand">

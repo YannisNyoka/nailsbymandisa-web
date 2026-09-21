@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile } from '../../lib/uploadImage.js';
+import { optimizedImageUrl } from '../../lib/cloudinaryUrl.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Table, useToast } from '../../design-system';
 import './AdminPages.css';
 
@@ -98,7 +99,7 @@ export function AdminServicesPage() {
       header: '',
       render: (s) =>
         s.imageUrl ? (
-          <img src={s.imageUrl} alt="" className="admin-services__thumb" />
+          <img src={optimizedImageUrl(s.imageUrl, { width: 100 })} alt="" className="admin-services__thumb" />
         ) : (
           <span className="admin-services__thumb admin-services__thumb--empty" aria-hidden="true" />
         ),
@@ -158,7 +159,7 @@ export function AdminServicesPage() {
           </FormField>
           <FormField label="Photo" hint="Shown on the public services list.">
             <div className="admin-services__image-field">
-              {form.imageUrl && <img src={form.imageUrl} alt="" className="admin-services__preview" />}
+              {form.imageUrl && <img src={optimizedImageUrl(form.imageUrl, { width: 150 })} alt="" className="admin-services__preview" />}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageChange} disabled={uploadingImage} />
               {uploadingImage && <span className="admin-page__muted">Uploading&hellip;</span>}
               {form.imageUrl && !uploadingImage && (

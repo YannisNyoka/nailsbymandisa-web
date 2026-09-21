@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, Button, Pagination, Table, useToast } from '../../design-system';
+import { optimizedImageUrl } from '../../lib/cloudinaryUrl.js';
 import './AdminPages.css';
 
 export function AdminGalleryModerationPage() {
@@ -32,7 +33,7 @@ export function AdminGalleryModerationPage() {
   }
 
   const columns = [
-    { key: 'preview', header: '', render: (s) => <img src={s.imageUrl} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} /> },
+    { key: 'preview', header: '', render: (s) => <img src={optimizedImageUrl(s.imageUrl, { width: 130 })} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} /> },
     { key: 'caption', header: 'Caption', render: (s) => s.caption || '—' },
     { key: 'submitted', header: 'Submitted', render: (s) => new Date(s.createdAt).toLocaleDateString() },
     {

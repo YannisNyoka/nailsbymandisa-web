@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile } from '../../lib/uploadImage.js';
+import { optimizedImageUrl } from '../../lib/cloudinaryUrl.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Pagination, Table, useToast } from '../../design-system';
 import './AdminPages.css';
 
@@ -75,7 +76,7 @@ export function AdminGalleryPage() {
   }
 
   const columns = [
-    { key: 'preview', header: '', render: (i) => <img src={i.mediaUrl} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} /> },
+    { key: 'preview', header: '', render: (i) => <img src={optimizedImageUrl(i.mediaUrl, { width: 100 })} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} /> },
     { key: 'caption', header: 'Caption', render: (i) => i.caption || '—' },
     { key: 'type', header: 'Type', render: (i) => i.mediaType },
     { key: 'likes', header: 'Likes', render: (i) => i.likedByUserIds.length },
