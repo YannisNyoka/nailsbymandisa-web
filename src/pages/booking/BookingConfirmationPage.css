@@ -19,3 +19,161 @@
   display: inline-block;
   margin-top: var(--space-4);
 }
+
+.payment-receipt {
+  max-width: 480px;
+  margin: var(--space-7) auto;
+  padding: 0 var(--space-5);
+  text-align: center;
+}
+
+.payment-receipt__success-ring {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-4);
+  border-radius: 50%;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-2xl);
+}
+
+.payment-receipt__heading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-2);
+}
+
+.payment-receipt__subheading {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+.payment-receipt__card {
+  background: var(--color-ink);
+  color: var(--color-ink-text);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: left;
+  box-shadow: var(--shadow-md);
+}
+
+.payment-receipt__card-header {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  text-align: center;
+}
+
+.payment-receipt__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: var(--space-4) 0;
+}
+
+.payment-receipt__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.payment-receipt__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.payment-receipt__label {
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
+}
+
+.payment-receipt__value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.payment-receipt__pricing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.payment-receipt__pricing-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.payment-receipt__pricing-row--discount {
+  color: #7fd99a;
+}
+
+.payment-receipt__pricing-row--balance {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+  font-weight: 700;
+  color: var(--color-ink-text);
+}
+
+.payment-receipt__paid {
+  color: #7fd99a;
+  font-weight: 600;
+}
+
+.payment-receipt__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.payment-receipt__calendar {
+  position: relative;
+}
+
+.payment-receipt__calendar-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-width: 200px;
+  z-index: 50;
+}
+.payment-receipt__calendar-menu button {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.payment-receipt__calendar-menu button:hover {
+  background: var(--color-surface-muted);
+}
+.payment-receipt__calendar-menu button + button {
+  border-top: 1px solid var(--color-border);
+}
+
+@media print {
+  .layout__header,
+  .layout__footer,
+  .whatsapp-button,
+  .payment-receipt__actions {
+    display: none !important;
+  }
+}

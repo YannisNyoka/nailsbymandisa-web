@@ -82,6 +82,14 @@
   gap: var(--space-2);
 }
 
+.booking-card__hint {
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  text-align: right;
+  max-width: 220px;
+  margin: 0;
+}
+
 .notification-item {
   display: flex;
   align-items: center;
