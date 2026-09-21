@@ -21,6 +21,8 @@ export function AdminHomepagePage() {
   const [adding, setAdding] = useState(false);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', tiktok: '', twitter: '' });
   const [savingSocial, setSavingSocial] = useState(false);
+  const [allowGuestBooking, setAllowGuestBooking] = useState(true);
+  const [savingBookingAccess, setSavingBookingAccess] = useState(false);
 
   useEffect(() => {
     apiClient
@@ -28,6 +30,7 @@ export function AdminHomepagePage() {
       .then(({ settings }) => {
         setItems(settings.heroMediaItems || []);
         setSocialLinks({ instagram: '', facebook: '', tiktok: '', twitter: '', ...settings.socialLinks });
+        setAllowGuestBooking(settings.allowGuestBooking !== false);
       })
       .catch((err) => showToast(err.message || 'Could not load the current hero.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,6 +86,22 @@ export function AdminHomepagePage() {
     persist(next, 'Reordered the hero slideshow.');
   }
 
+  async function handleToggleGuestBooking(nextValue) {
+    setSavingBookingAccess(true);
+    try {
+      const { settings } = await apiClient.patch('/settings', { allowGuestBooking: nextValue });
+      setAllowGuestBooking(settings.allowGuestBooking !== false);
+      showToast(
+        nextValue ? 'Guest booking enabled — anyone can book without an account.' : 'Guest booking disabled — customers must sign in or register to book.',
+        { variant: 'success' }
+      );
+    } catch (err) {
+      showToast(err.message || 'Could not update this setting.', { variant: 'error' });
+    } finally {
+      setSavingBookingAccess(false);
+    }
+  }
+
   async function handleSocialSubmit(e) {
     e.preventDefault();
     setSavingSocial(true);
@@ -100,13 +119,30 @@ export function AdminHomepagePage() {
 
   return (
     <div>
+      <h2>Booking access</h2>
+      <p className="admin-page__muted" style={{ marginBottom: 'var(--space-4)' }}>
+        Controls whether a visitor can complete a booking with just their name, email and
+        phone number, or must sign in or register first. Enforced on the server either
+        way — this isn&rsquo;t just a UI toggle. An admin creating a booking on a
+        client&rsquo;s behalf (e.g. a phone booking) is never affected.
+      </p>
+      <label className="admin-homepage__toggle">
+        <input
+          type="checkbox"
+          checked={allowGuestBooking}
+          disabled={savingBookingAccess}
+          onChange={(e) => handleToggleGuestBooking(e.target.checked)}
+        />
+        Allow guest booking (no account required)
+      </label>
+
+      <h2 style={{ marginTop: 'var(--space-8)' }}>Hero slideshow</h2>
       <p className="admin-page__muted" style={{ marginBottom: 'var(--space-5)' }}>
         Controls the large background at the top of the public home page. With more than
         one item, it plays as a slideshow in this order, looping back to the start. At
         least one item is always required, so Remove is disabled while only one remains —
         add a replacement first, then remove the old one.
       </p>
-
       <ul className="admin-homepage__slides">
         {items.map((item, index) => (
           <li key={item.url} className="admin-homepage__slide">

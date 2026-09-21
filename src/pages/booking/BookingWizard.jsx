@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/apiClient.js';
 import { Button, FormField, useToast } from '../../design-system';
@@ -44,6 +44,14 @@ export function BookingWizard() {
   const [appliedDiscount, setAppliedDiscount] = useState(null); // { code, discountValueCents }
   const [checkingDiscount, setCheckingDiscount] = useState(false);
   const [giftCardCodeInput, setGiftCardCodeInput] = useState('');
+  const [allowGuestBooking, setAllowGuestBooking] = useState(true);
+
+  useEffect(() => {
+    apiClient
+      .get('/settings')
+      .then(({ settings }) => setAllowGuestBooking(settings.allowGuestBooking !== false))
+      .catch(() => setAllowGuestBooking(true));
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -120,7 +128,11 @@ export function BookingWizard() {
     if (stepIndex === 0) return selectedServiceIds.length > 0;
     if (stepIndex === 1) return Boolean(employeeId);
     if (stepIndex === 2) return Boolean(date && startTime);
-    if (stepIndex === 3) return isAuthenticated || (guestInfo.name && guestInfo.email && guestInfo.phone);
+    if (stepIndex === 3) {
+      if (isAuthenticated) return true;
+      if (!allowGuestBooking) return false; // must sign in/register first — see the blocked message rendered at this step
+      return Boolean(guestInfo.name && guestInfo.email && guestInfo.phone);
+    }
     return true;
   }
 
@@ -264,6 +276,18 @@ export function BookingWizard() {
           <h2>Your details</h2>
           {isAuthenticated ? (
             <p>Booking as {user.firstName} {user.lastName} ({user.email}).</p>
+          ) : !allowGuestBooking ? (
+            <div className="booking-wizard__auth-required">
+              <p>Please sign in or create an account to complete this booking.</p>
+              <div className="booking-wizard__auth-required-actions">
+                <Link to="/login" state={{ from: { pathname: '/book' } }}>
+                  <Button type="button">Log in</Button>
+                </Link>
+                <Link to="/register" state={{ from: { pathname: '/book' } }}>
+                  <Button type="button" variant="secondary">Create account</Button>
+                </Link>
+              </div>
+            </div>
           ) : (
             <>
               <FormField label="Name" required>
@@ -277,9 +301,11 @@ export function BookingWizard() {
               </FormField>
             </>
           )}
-          <FormField label="Notes" hint="Optional — anything we should know?">
-            <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </FormField>
+          {(isAuthenticated || allowGuestBooking) && (
+            <FormField label="Notes" hint="Optional — anything we should know?">
+              <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </FormField>
+          )}
         </section>
       )}
 

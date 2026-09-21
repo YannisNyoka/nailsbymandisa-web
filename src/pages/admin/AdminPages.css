@@ -191,6 +191,14 @@
   font-size: var(--text-sm);
 }
 
+.admin-homepage__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .admin-homepage__preview {
   display: block;
   width: 100%;

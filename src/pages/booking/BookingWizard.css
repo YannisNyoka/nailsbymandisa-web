@@ -125,6 +125,21 @@
   font-size: var(--text-sm);
 }
 
+.booking-wizard__auth-required {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+.booking-wizard__auth-required-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
 .booking-wizard__nav {
   display: flex;
   justify-content: space-between;
