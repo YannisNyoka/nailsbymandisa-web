@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
+import { uploadImageFile } from '../../lib/uploadImage.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Table, useToast } from '../../design-system';
 import './AdminPages.css';
 
 const CATEGORIES = ['manicure', 'pedicure', 'gel', 'acrylic', 'polygel', 'nail_art', 'soak_off', 'extensions'];
 
-const emptyForm = { name: '', category: 'gel', description: '', durationMinutes: 60, priceRand: '' };
+const emptyForm = { name: '', category: 'gel', description: '', durationMinutes: 60, priceRand: '', imageUrl: null };
 
 export function AdminServicesPage() {
   const { showToast } = useToast();
@@ -14,6 +15,7 @@ export function AdminServicesPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   async function load() {
     const { services: list } = await apiClient.get('/services');
@@ -38,8 +40,23 @@ export function AdminServicesPage() {
       durationMinutes: service.durationMinutes,
       priceRand: (service.priceCents / 100).toString(),
       isActive: service.isActive,
+      imageUrl: service.imageUrl || null,
     });
     setEditing(service);
+  }
+
+  async function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadImageFile(file);
+      setForm((f) => ({ ...f, imageUrl: url }));
+    } catch (err) {
+      showToast(err.message || 'Could not upload that image.', { variant: 'error' });
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -50,6 +67,7 @@ export function AdminServicesPage() {
         name: form.name,
         category: form.category,
         description: form.description || null,
+        imageUrl: form.imageUrl || null,
         durationMinutes: Number(form.durationMinutes),
         priceCents: Math.round(Number(form.priceRand) * 100),
       };
@@ -75,6 +93,16 @@ export function AdminServicesPage() {
   }
 
   const columns = [
+    {
+      key: 'image',
+      header: '',
+      render: (s) =>
+        s.imageUrl ? (
+          <img src={s.imageUrl} alt="" className="admin-services__thumb" />
+        ) : (
+          <span className="admin-services__thumb admin-services__thumb--empty" aria-hidden="true" />
+        ),
+    },
     { key: 'name', header: 'Name' },
     { key: 'category', header: 'Category', render: (s) => s.category.replace('_', ' ') },
     { key: 'duration', header: 'Duration', render: (s) => `${s.durationMinutes} min` },
@@ -127,6 +155,18 @@ export function AdminServicesPage() {
           </FormField>
           <FormField label="Description">
             <textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+          </FormField>
+          <FormField label="Photo" hint="Shown on the public services list.">
+            <div className="admin-services__image-field">
+              {form.imageUrl && <img src={form.imageUrl} alt="" className="admin-services__preview" />}
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageChange} disabled={uploadingImage} />
+              {uploadingImage && <span className="admin-page__muted">Uploading&hellip;</span>}
+              {form.imageUrl && !uploadingImage && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, imageUrl: null }))}>
+                  Remove photo
+                </Button>
+              )}
+            </div>
           </FormField>
           <div className="admin-form-grid">
             <FormField label="Duration (minutes)" required>

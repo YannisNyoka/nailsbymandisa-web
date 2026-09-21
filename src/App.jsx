@@ -31,10 +31,6 @@ import { AdminGiftCardsPage } from './pages/admin/AdminGiftCardsPage.jsx';
 import { GiftCardPurchasePage } from './pages/giftcards/GiftCardPurchasePage.jsx';
 import { GiftCardConfirmationPage } from './pages/giftcards/GiftCardConfirmationPage.jsx';
 import { GiftCardsPage } from './pages/account/GiftCardsPage.jsx';
-import { SubscriptionPlansPage } from './pages/subscriptions/SubscriptionPlansPage.jsx';
-import { SubscriptionPage } from './pages/account/SubscriptionPage.jsx';
-import { AdminSubscriptionPlansPage } from './pages/admin/AdminSubscriptionPlansPage.jsx';
-import { AdminSubscriptionsPage } from './pages/admin/AdminSubscriptionsPage.jsx';
 import { GalleryPage } from './pages/gallery/GalleryPage.jsx';
 import { SubmitPhotoPage } from './pages/gallery/SubmitPhotoPage.jsx';
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage.jsx';
@@ -43,6 +39,8 @@ import { AdminComposeNotificationPage } from './pages/admin/AdminComposeNotifica
 import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx';
 import { AdminSchedulePage } from './pages/admin/AdminSchedulePage.jsx';
 import { AdminHomepagePage } from './pages/admin/AdminHomepagePage.jsx';
+import { AdminEnquiriesPage } from './pages/admin/AdminEnquiriesPage.jsx';
+import { ContactPage } from './pages/ContactPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 
 // More routes land here as each build-order step reaches the frontend: PWA install,
@@ -57,8 +55,8 @@ export function App() {
         <Route path="/booking/payment" element={<BookingPaymentRetryPage />} />
         <Route path="/gift-cards/purchase" element={<GiftCardPurchasePage />} />
         <Route path="/gift-cards/confirmation" element={<GiftCardConfirmationPage />} />
-        <Route path="/subscriptions/plans" element={<SubscriptionPlansPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -72,7 +70,6 @@ export function App() {
             <Route path="/account/loyalty" element={<LoyaltyPage />} />
             <Route path="/account/referrals" element={<ReferralsPage />} />
             <Route path="/account/gift-cards" element={<GiftCardsPage />} />
-            <Route path="/account/subscription" element={<SubscriptionPage />} />
           </Route>
           <Route path="/gallery/submit" element={<SubmitPhotoPage />} />
         </Route>
@@ -92,11 +89,10 @@ export function App() {
             <Route path="activity" element={<AdminActivityPage />} />
             <Route path="discount-codes" element={<AdminDiscountCodesPage />} />
             <Route path="gift-cards" element={<AdminGiftCardsPage />} />
-            <Route path="subscription-plans" element={<AdminSubscriptionPlansPage />} />
-            <Route path="subscribers" element={<AdminSubscriptionsPage />} />
             <Route path="gallery" element={<AdminGalleryPage />} />
             <Route path="gallery-moderation" element={<AdminGalleryModerationPage />} />
             <Route path="compose-notification" element={<AdminComposeNotificationPage />} />
+            <Route path="enquiries" element={<AdminEnquiriesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
           </Route>
         </Route>

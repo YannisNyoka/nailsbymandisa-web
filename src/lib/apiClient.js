@@ -28,22 +28,44 @@ export function setUnauthorizedHandler(fn) {
   onUnauthorized = fn;
 }
 
-async function request(path, { method = 'GET', body, headers = {}, skipUnauthorizedHandler = false, ...rest } = {}) {
+// Plain requests are fast (JSON CRUD) — 30s is already generous. File uploads need much
+// more: routed through Render's free tier then relayed to Cloudinary, and Cloudinary's
+// own video processing (transcoding/thumbnailing) is noticeably slower than its image
+// path. Without any timeout at all, a slow/stuck upload just spun the button's loading
+// state forever with zero feedback — found via a real large video upload doing exactly
+// that in production.
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+async function request(path, { method = 'GET', body, headers = {}, skipUnauthorizedHandler = false, timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = {}) {
   // FormData (file uploads) must go through as-is — JSON.stringify-ing it would send
   // "[object FormData]", and setting our own Content-Type would drop the multipart
   // boundary fetch generates automatically. Every other caller still gets plain JSON.
   const isFormData = body instanceof FormData;
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    credentials: 'include',
-    headers: {
-      ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...headers,
-    },
-    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-    ...rest,
-  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      credentials: 'include',
+      headers: {
+        ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...headers,
+      },
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      signal: controller.signal,
+      ...rest,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new ApiError('That took too long and timed out. Check your connection and try again.', 0, 'TIMEOUT');
+    }
+    throw new ApiError('Could not reach the server. Check your connection and try again.', 0, 'NETWORK_ERROR');
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const isJson = res.headers.get('content-type')?.includes('application/json');
   const payload = isJson ? await res.json().catch(() => null) : null;

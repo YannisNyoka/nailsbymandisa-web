@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/apiClient.js';
 import { Button, FormField, useToast } from '../../design-system';
@@ -21,6 +21,7 @@ export function BookingWizard() {
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   useDocumentMeta('Book an appointment', 'Book your manicure, pedicure, gel, acrylic or nail art appointment online.');
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -43,8 +44,6 @@ export function BookingWizard() {
   const [appliedDiscount, setAppliedDiscount] = useState(null); // { code, discountValueCents }
   const [checkingDiscount, setCheckingDiscount] = useState(false);
   const [giftCardCodeInput, setGiftCardCodeInput] = useState('');
-  const [subscriptionCredits, setSubscriptionCredits] = useState(0);
-  const [useCredit, setUseCredit] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -52,10 +51,6 @@ export function BookingWizard() {
         .get('/loyalty/me')
         .then((ledger) => setPointsBalance(ledger.pointsBalance))
         .catch(() => setPointsBalance(0));
-      apiClient
-        .get('/subscriptions/me')
-        .then(({ subscription }) => setSubscriptionCredits(subscription?.status === 'active' ? subscription.creditsRemaining : 0))
-        .catch(() => setSubscriptionCredits(0));
     }
   }, [isAuthenticated]);
 
@@ -64,6 +59,12 @@ export function BookingWizard() {
       .then(([{ services: s }, { employees: e }]) => {
         setServices(s);
         setStaff(e);
+        // Coming from a service card on the home page ("Our services" — /book?service=<id>)
+        // pre-selects that service instead of dropping the visitor back at an empty list.
+        const preselectId = searchParams.get('service');
+        if (preselectId && s.some((service) => service._id === preselectId)) {
+          setSelectedServiceIds([preselectId]);
+        }
       })
       .catch((err) => showToast(err.message || 'Could not load services.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,20 +164,11 @@ export function BookingWizard() {
 
     try {
       const { payment } = await apiClient.post(`/payments/appointments/${appointment._id}/checkout`, {
-        ...(useCredit
-          ? { useSubscriptionCredit: true }
-          : {
-              ...(pointsToRedeem > 0 ? { pointsToRedeem } : {}),
-              ...(appliedDiscount ? { discountCode: appliedDiscount.code } : {}),
-              ...(giftCardCodeInput ? { giftCardCode: giftCardCodeInput } : {}),
-            }),
+        ...(pointsToRedeem > 0 ? { pointsToRedeem } : {}),
+        ...(appliedDiscount ? { discountCode: appliedDiscount.code } : {}),
+        ...(giftCardCodeInput ? { giftCardCode: giftCardCodeInput } : {}),
       });
-      if (payment.status === 'paid') {
-        // A subscription credit fully covered the deposit — no Yoco checkout needed.
-        navigate(`/booking/confirmation?appointmentId=${appointment._id}`);
-      } else {
-        window.location.href = payment.redirectUrl;
-      }
+      window.location.href = payment.redirectUrl;
     } catch (err) {
       // The appointment already exists at this point (created above) — send them to the
       // same recovery page Yoco's own cancel/failure redirect uses, which retries
@@ -305,56 +297,41 @@ export function BookingWizard() {
             <dd>{formatCents(estimatedPriceCents)} (final price and deposit confirmed at checkout)</dd>
           </dl>
 
-          {isAuthenticated && subscriptionCredits > 0 && (
-            <FormField label="Membership credit">
-              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <input type="checkbox" checked={useCredit} onChange={(e) => setUseCredit(e.target.checked)} />
-                Use 1 of my {subscriptionCredits} membership credits to cover this deposit in full
-              </label>
+          <FormField label="Discount code">
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <input
+                value={discountCodeInput}
+                onChange={(e) => {
+                  setDiscountCodeInput(e.target.value);
+                  setAppliedDiscount(null);
+                }}
+                disabled={Boolean(appliedDiscount)}
+              />
+              <Button variant="secondary" onClick={checkDiscountCode} loading={checkingDiscount} disabled={Boolean(appliedDiscount) || !discountCodeInput}>
+                Apply
+              </Button>
+            </div>
+          </FormField>
+          {appliedDiscount && <p className="booking-wizard__note">{appliedDiscount.code} applied: -{formatCents(appliedDiscount.discountValueCents)}</p>}
+
+          {isAuthenticated && pointsBalance > 0 && (
+            <FormField label={`Redeem points (${pointsBalance} available)`} hint="Applied toward your deposit, up to the salon's redemption cap">
+              <input
+                type="number"
+                min={0}
+                max={pointsBalance}
+                value={pointsToRedeem}
+                onChange={(e) => setPointsToRedeem(Math.max(0, Math.min(pointsBalance, Number(e.target.value))))}
+              />
             </FormField>
           )}
 
-          {!useCredit && (
-            <>
-              <FormField label="Discount code">
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                  <input
-                    value={discountCodeInput}
-                    onChange={(e) => {
-                      setDiscountCodeInput(e.target.value);
-                      setAppliedDiscount(null);
-                    }}
-                    disabled={Boolean(appliedDiscount)}
-                  />
-                  <Button variant="secondary" onClick={checkDiscountCode} loading={checkingDiscount} disabled={Boolean(appliedDiscount) || !discountCodeInput}>
-                    Apply
-                  </Button>
-                </div>
-              </FormField>
-              {appliedDiscount && <p className="booking-wizard__note">{appliedDiscount.code} applied: -{formatCents(appliedDiscount.discountValueCents)}</p>}
-
-              {isAuthenticated && pointsBalance > 0 && (
-                <FormField label={`Redeem points (${pointsBalance} available)`} hint="Applied toward your deposit, up to the salon's redemption cap">
-                  <input
-                    type="number"
-                    min={0}
-                    max={pointsBalance}
-                    value={pointsToRedeem}
-                    onChange={(e) => setPointsToRedeem(Math.max(0, Math.min(pointsBalance, Number(e.target.value))))}
-                  />
-                </FormField>
-              )}
-
-              <FormField label="Gift card code" hint="Optional — its balance is applied to your deposit at checkout">
-                <input value={giftCardCodeInput} onChange={(e) => setGiftCardCodeInput(e.target.value)} />
-              </FormField>
-            </>
-          )}
+          <FormField label="Gift card code" hint="Optional — its balance is applied to your deposit at checkout">
+            <input value={giftCardCodeInput} onChange={(e) => setGiftCardCodeInput(e.target.value)} />
+          </FormField>
 
           <p className="booking-wizard__note">
-            {useCredit
-              ? 'Using a membership credit fully covers your deposit — no payment provider redirect needed.'
-              : "A non-refundable deposit is required to confirm your booking. Any discount, points, or gift card balance is applied to the deposit amount at checkout — the exact charge is confirmed there. You'll be redirected to our secure payment provider next."}
+            A non-refundable deposit is required to confirm your booking. Any discount, points, or gift card balance is applied to the deposit amount at checkout — the exact charge is confirmed there. You'll be redirected to our secure payment provider next.
           </p>
         </section>
       )}

@@ -120,7 +120,7 @@
 .layout__footer {
   background: var(--color-ink);
   color: var(--color-ink-muted);
-  /* Extra bottom padding reserves clear space above the fixed WhatsAppButton (bottom-left,
+  /* Extra bottom padding reserves clear space above the fixed WhatsAppButton (bottom-right,
      ~50px tall) — without it, the last line of footer text sits directly behind the
      button on short pages, since a fixed element stays pinned to the viewport even once
      the page is scrolled all the way down. */
@@ -197,5 +197,30 @@
     box-shadow: none;
     border: none;
     padding-left: var(--space-3);
+  }
+  .notification-bell {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .notification-bell__trigger {
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2);
+  }
+  .notification-bell__trigger::after {
+    content: 'Notifications';
+    font-size: var(--text-sm);
+  }
+  .notification-bell__badge {
+    position: static;
+    margin-left: var(--space-1);
+  }
+  .notification-bell__panel {
+    position: static;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
   }
 }

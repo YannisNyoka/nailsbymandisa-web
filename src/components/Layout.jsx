@@ -5,6 +5,7 @@ import { Button } from '../design-system';
 import { WhatsAppButton } from './WhatsAppButton.jsx';
 import { InstallPrompt } from './InstallPrompt.jsx';
 import { SocialLinks } from './SocialLinks.jsx';
+import { NotificationBell } from './NotificationBell.jsx';
 import './Layout.css';
 
 const YEAR = new Date().getFullYear();
@@ -50,11 +51,11 @@ export function Layout() {
           </Link>
           <NavLink to="/gallery" className={navLinkClass}>Gallery</NavLink>
           <NavLink to="/gift-cards/purchase" className={navLinkClass}>Gift cards</NavLink>
-          <NavLink to="/subscriptions/plans" className={navLinkClass}>Membership</NavLink>
+          <NavLink to="/contact" className={navLinkClass}>Contact</NavLink>
           {isAuthenticated ? (
             <>
               {(user.role === 'admin' || user.role === 'staff') && <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>}
-              <NavLink to="/account/notifications" className={navLinkClass}>Notifications</NavLink>
+              <NotificationBell />
               <details className="layout__account-menu">
                 <summary>{user.firstName}</summary>
                 <div className="layout__account-menu-panel">
@@ -62,7 +63,6 @@ export function Layout() {
                   <Link to="/account/loyalty">Loyalty</Link>
                   <Link to="/account/referrals">Refer a friend</Link>
                   <Link to="/account/gift-cards">My gift cards</Link>
-                  <Link to="/account/subscription">Subscription</Link>
                   <Link to="/gallery/submit">Share a photo</Link>
                   <Link to="/account/profile">Profile</Link>
                 </div>

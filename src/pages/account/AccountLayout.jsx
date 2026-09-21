@@ -6,7 +6,6 @@ const ACCOUNT_NAV_ITEMS = [
   { to: '/account/loyalty', label: 'Loyalty' },
   { to: '/account/referrals', label: 'Refer a friend' },
   { to: '/account/gift-cards', label: 'Gift cards' },
-  { to: '/account/subscription', label: 'Subscription' },
   { to: '/account/notifications', label: 'Notifications' },
   { to: '/account/profile', label: 'Profile' },
 ];

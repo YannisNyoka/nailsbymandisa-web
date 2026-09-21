@@ -101,7 +101,9 @@ export function AdminHomepagePage() {
     <div>
       <p className="admin-page__muted" style={{ marginBottom: 'var(--space-5)' }}>
         Controls the large background at the top of the public home page. With more than
-        one item, it plays as a slideshow in this order, looping back to the start.
+        one item, it plays as a slideshow in this order, looping back to the start. At
+        least one item is always required, so Remove is disabled while only one remains —
+        add a replacement first, then remove the old one.
       </p>
 
       <ul className="admin-homepage__slides">
@@ -118,7 +120,15 @@ export function AdminHomepagePage() {
             <div className="admin-homepage__slide-actions">
               <Button variant="secondary" size="sm" disabled={persisting || index === 0} onClick={() => handleMove(index, -1)}>↑</Button>
               <Button variant="secondary" size="sm" disabled={persisting || index === items.length - 1} onClick={() => handleMove(index, 1)}>↓</Button>
-              <Button variant="danger" size="sm" disabled={persisting || items.length <= 1} onClick={() => handleRemove(index)}>Remove</Button>
+              <Button
+                variant="danger"
+                size="sm"
+                disabled={persisting || items.length <= 1}
+                title={items.length <= 1 ? 'Add another item first — the hero always needs at least one.' : undefined}
+                onClick={() => handleRemove(index)}
+              >
+                Remove
+              </Button>
             </div>
           </li>
         ))}

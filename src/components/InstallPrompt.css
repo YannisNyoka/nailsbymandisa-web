@@ -1,6 +1,9 @@
 .install-prompt {
   position: fixed;
-  bottom: var(--space-5);
+  /* Clears the WhatsApp bubble (also bottom-right, same as nxlbeautybar's reference
+     layout) instead of overlapping it — WhatsAppButton.css's own bottom offset plus its
+     rendered height, with a bit of breathing room. */
+  bottom: calc(var(--space-5) + 56px);
   right: var(--space-5);
   left: var(--space-5);
   max-width: 420px;

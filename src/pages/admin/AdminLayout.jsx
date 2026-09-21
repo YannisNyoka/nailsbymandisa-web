@@ -18,11 +18,10 @@ const NAV_ITEMS = [
   { to: '/admin/payments', label: 'Payments', icon: '💳' },
   { to: '/admin/discount-codes', label: 'Discount codes', icon: '🏷️' },
   { to: '/admin/gift-cards', label: 'Gift cards', icon: '🎁' },
-  { to: '/admin/subscription-plans', label: 'Subscription plans', icon: '📋' },
-  { to: '/admin/subscribers', label: 'Subscribers', icon: '📇' },
   { to: '/admin/gallery', label: 'Gallery', icon: '🖼️' },
   { to: '/admin/gallery-moderation', label: 'Gallery moderation', icon: '🛡️' },
   { to: '/admin/compose-notification', label: 'Send notification', icon: '🔔' },
+  { to: '/admin/enquiries', label: 'Enquiries', icon: '✉️' },
   { to: '/admin/activity', label: 'Activity', icon: '📜' },
   { to: '/admin/users', label: 'Admin users', icon: '🔑' },
 ];

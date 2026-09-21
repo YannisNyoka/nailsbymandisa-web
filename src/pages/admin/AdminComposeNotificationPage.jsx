@@ -5,18 +5,36 @@ import './AdminPages.css';
 
 export function AdminComposeNotificationPage() {
   const { showToast } = useToast();
+  const [clientSearch, setClientSearch] = useState('');
   const [clients, setClients] = useState([]);
   const [mode, setMode] = useState('targeted'); // 'targeted' | 'broadcast'
   const [userId, setUserId] = useState('');
+  const [selectedClient, setSelectedClient] = useState(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [alsoSms, setAlsoSms] = useState(false);
   const [confirmingBroadcast, setConfirmingBroadcast] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // §gap-fix — this used to preload every client at once with `pageSize=200`, which
+  // always exceeded PAGINATION.MAX_LIMIT (100) and 400'd on every load, uncaught (no
+  // `.catch()`) — the "one client" dropdown silently never had any options, the whole
+  // targeted-notification path was unusable. Search-as-you-type instead: never loads
+  // more than a page of results, and doesn't silently truncate the client list once the
+  // salon has more than 100 customers (a plain preload-everything dropdown would).
   useEffect(() => {
-    apiClient.get('/admin/clients?pageSize=200').then(({ clients: list }) => setClients(list));
-  }, []);
+    if (!clientSearch) {
+      setClients([]);
+      return;
+    }
+    let cancelled = false;
+    apiClient
+      .get(`/admin/clients?search=${encodeURIComponent(clientSearch)}&pageSize=20`)
+      .then(({ clients: list }) => { if (!cancelled) setClients(list); })
+      .catch((err) => { if (!cancelled) showToast(err.message || 'Could not search clients.', { variant: 'error' }); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientSearch]);
 
   async function send() {
     setSubmitting(true);
@@ -26,6 +44,9 @@ export function AdminComposeNotificationPage() {
       showToast(`Sent to ${result.sentCount} client${result.sentCount === 1 ? '' : 's'}.`, { variant: 'success' });
       setTitle('');
       setBody('');
+      setSelectedClient(null);
+      setUserId('');
+      setClientSearch('');
     } catch (err) {
       showToast(err.message || 'Could not send.', { variant: 'error' });
     } finally {
@@ -54,14 +75,44 @@ export function AdminComposeNotificationPage() {
           </select>
         </FormField>
         {mode === 'targeted' && (
-          <FormField label="Client" required>
-            <select value={userId} onChange={(e) => setUserId(e.target.value)}>
-              <option value="">Select a client&hellip;</option>
-              {clients.map((c) => (
-                <option key={c._id} value={c._id}>{c.firstName} {c.lastName} ({c.email})</option>
-              ))}
-            </select>
-          </FormField>
+          selectedClient ? (
+            <FormField label="Client" required>
+              <div className="admin-compose__selected-client">
+                <span>{selectedClient.firstName} {selectedClient.lastName} ({selectedClient.email})</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setSelectedClient(null); setUserId(''); setClientSearch(''); }}
+                >
+                  Change
+                </Button>
+              </div>
+            </FormField>
+          ) : (
+            <>
+              <FormField label="Client" required hint="Type a name or email to search">
+                <input
+                  type="search"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  placeholder="Search clients…"
+                />
+              </FormField>
+              {clientSearch && (
+                <ul className="admin-compose__client-results">
+                  {clients.length === 0 && <li className="admin-page__muted">No matches.</li>}
+                  {clients.map((c) => (
+                    <li key={c._id}>
+                      <button type="button" onClick={() => { setSelectedClient(c); setUserId(c._id); }}>
+                        {c.firstName} {c.lastName} ({c.email})
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )
         )}
         <FormField label="Title" required>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />

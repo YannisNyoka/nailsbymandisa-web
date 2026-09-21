@@ -144,11 +144,20 @@ export function HomePage() {
           <h2>Our services</h2>
           <ul className="home__service-list">
             {services.map((s) => (
-              <li key={s._id} className="home__service">
-                <span className="home__service-name">{s.name}</span>
-                <span className="home__service-meta">
-                  {s.durationMinutes} min &middot; R{(s.priceCents / 100).toFixed(2)}
-                </span>
+              <li key={s._id}>
+                <Link to={`/book?service=${s._id}`} className="home__service">
+                  {s.imageUrl ? (
+                    <img src={s.imageUrl} alt="" className="home__service-image" />
+                  ) : (
+                    <span className="home__service-image home__service-image--empty" aria-hidden="true" />
+                  )}
+                  <span className="home__service-body">
+                    <span className="home__service-name">{s.name}</span>
+                    <span className="home__service-meta">
+                      {s.durationMinutes} min &middot; R{(s.priceCents / 100).toFixed(2)}
+                    </span>
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

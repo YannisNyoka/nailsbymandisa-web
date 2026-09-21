@@ -15,12 +15,12 @@ const PERMISSION_LABELS = {
   manage_payments: 'Payments & refunds',
   manage_discounts: 'Discount codes',
   manage_gift_cards: 'Gift cards',
-  manage_subscriptions: 'Subscriptions',
   manage_loyalty: 'Loyalty',
   manage_gallery: 'Gallery',
   manage_clients: 'Clients',
   manage_settings: 'Settings',
   send_notifications: 'Send notifications',
+  manage_enquiries: 'Contact-form enquiries',
   view_analytics: 'Analytics & activity',
   manage_admin_users: 'Admin users (this page)',
 };
