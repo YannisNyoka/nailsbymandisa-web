@@ -45,11 +45,15 @@ export function BookingWizard() {
   const [checkingDiscount, setCheckingDiscount] = useState(false);
   const [giftCardCodeInput, setGiftCardCodeInput] = useState('');
   const [allowGuestBooking, setAllowGuestBooking] = useState(true);
+  const [lockedMonths, setLockedMonths] = useState([]);
 
   useEffect(() => {
     apiClient
       .get('/settings')
-      .then(({ settings }) => setAllowGuestBooking(settings.allowGuestBooking !== false))
+      .then(({ settings }) => {
+        setAllowGuestBooking(settings.allowGuestBooking !== false);
+        setLockedMonths(settings.lockedMonths || []);
+      })
       .catch(() => setAllowGuestBooking(true));
   }, []);
 
@@ -123,6 +127,11 @@ export function BookingWizard() {
     setDate(value);
     if (value) loadSlots(value);
   }
+
+  // Presentational only — the server is the real source of truth (returns zero slots for
+  // a locked month either way), this just swaps in a clearer message than a generic
+  // "no times available that day" for what's actually a whole-month closure.
+  const isDateInLockedMonth = Boolean(date) && lockedMonths.includes(date.slice(0, 7));
 
   function canProceed() {
     if (stepIndex === 0) return selectedServiceIds.length > 0;
@@ -254,8 +263,13 @@ export function BookingWizard() {
             <input type="date" min={todayDateInputValue()} value={date} onChange={(e) => handleDateChange(e.target.value)} />
           </FormField>
           {date && loadingSlots && <p>Loading available times&hellip;</p>}
-          {date && !loadingSlots && slots && slots.length === 0 && <p>No times available that day — try another date.</p>}
-          {date && !loadingSlots && slots && slots.length > 0 && (
+          {date && !loadingSlots && isDateInLockedMonth && (
+            <p>Bookings for this month are currently closed. Please choose a date in an open month.</p>
+          )}
+          {date && !loadingSlots && !isDateInLockedMonth && slots && slots.length === 0 && (
+            <p>No times available that day — try another date.</p>
+          )}
+          {date && !loadingSlots && !isDateInLockedMonth && slots && slots.length > 0 && (
             <div className="booking-wizard__slots">
               {slots.map((slot) => (
                 <button

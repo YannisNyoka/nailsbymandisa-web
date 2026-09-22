@@ -5,6 +5,23 @@ import { optimizedImageUrl, optimizedVideoUrl } from '../../lib/cloudinaryUrl.js
 import { Button, FormField, useToast } from '../../design-system';
 import './AdminPages.css';
 
+const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('en-ZA', { month: 'long', year: 'numeric' });
+
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// The next 13 calendar months starting this one — far enough ahead to plan a booking
+// window without an unbounded (and pointless, since nobody can book that far out anyway)
+// list of toggles.
+function upcomingMonths(count = 13) {
+  const now = new Date();
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    return { key: monthKey(d), label: MONTH_LABEL_FORMATTER.format(d) };
+  });
+}
+
 // The only home-page setting exposed here today is the hero — see README "Also surfaced
 // while doing this" for the broader "no admin settings screen exists yet" gap this page
 // is a first, narrow instance of, not a full settings page.
@@ -23,6 +40,8 @@ export function AdminHomepagePage() {
   const [savingSocial, setSavingSocial] = useState(false);
   const [allowGuestBooking, setAllowGuestBooking] = useState(true);
   const [savingBookingAccess, setSavingBookingAccess] = useState(false);
+  const [lockedMonths, setLockedMonths] = useState([]);
+  const [togglingMonth, setTogglingMonth] = useState(null);
 
   useEffect(() => {
     apiClient
@@ -31,6 +50,7 @@ export function AdminHomepagePage() {
         setItems(settings.heroMediaItems || []);
         setSocialLinks({ instagram: '', facebook: '', tiktok: '', twitter: '', ...settings.socialLinks });
         setAllowGuestBooking(settings.allowGuestBooking !== false);
+        setLockedMonths(settings.lockedMonths || []);
       })
       .catch((err) => showToast(err.message || 'Could not load the current hero.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,6 +122,21 @@ export function AdminHomepagePage() {
     }
   }
 
+  async function handleToggleMonth(key) {
+    const isLocked = lockedMonths.includes(key);
+    const next = isLocked ? lockedMonths.filter((m) => m !== key) : [...lockedMonths, key];
+    setTogglingMonth(key);
+    try {
+      const { settings } = await apiClient.patch('/settings', { lockedMonths: next });
+      setLockedMonths(settings.lockedMonths || []);
+      showToast(isLocked ? 'Month reopened for booking.' : 'Month closed to new bookings.', { variant: 'success' });
+    } catch (err) {
+      showToast(err.message || 'Could not update this setting.', { variant: 'error' });
+    } finally {
+      setTogglingMonth(null);
+    }
+  }
+
   async function handleSocialSubmit(e) {
     e.preventDefault();
     setSavingSocial(true);
@@ -135,6 +170,33 @@ export function AdminHomepagePage() {
         />
         Allow guest booking (no account required)
       </label>
+
+      <h2 style={{ marginTop: 'var(--space-8)' }}>Booking window</h2>
+      <p className="admin-page__muted" style={{ marginBottom: 'var(--space-4)' }}>
+        Close specific calendar months to new bookings — for example, to only take
+        bookings for the current and next month. Enforced on the server: a locked month
+        rejects every new booking (guest, account or admin-created alike), same as an
+        admin-blocked slot. Existing bookings already made for a locked month are
+        unaffected.
+      </p>
+      <ul className="admin-homepage__month-grid">
+        {upcomingMonths().map(({ key, label }) => {
+          const isLocked = lockedMonths.includes(key);
+          return (
+            <li key={key}>
+              <button
+                type="button"
+                className={`admin-homepage__month${isLocked ? ' admin-homepage__month--locked' : ''}`}
+                disabled={togglingMonth === key}
+                onClick={() => handleToggleMonth(key)}
+              >
+                <span>{label}</span>
+                <span className="admin-homepage__month-status">{isLocked ? 'Closed' : 'Open'}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       <h2 style={{ marginTop: 'var(--space-8)' }}>Hero slideshow</h2>
       <p className="admin-page__muted" style={{ marginBottom: 'var(--space-5)' }}>
