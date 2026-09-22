@@ -140,15 +140,17 @@
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
-/* min-width: 100% + justify-content: center means: fewer cards than fit the viewport ->
-   centered as a group (not stuck against the left edge with empty space on the right);
-   enough cards to overflow -> this has no effect and the row scrolls normally from its
-   natural start, so swiping still works exactly the same either way. */
+/* min-width: 100% + justify-content: safe center means: fewer cards than fit the viewport
+   -> centered as a group (not stuck against the left edge with empty space on the right);
+   enough cards to overflow -> `safe` falls back to start alignment so every card stays
+   reachable by scrolling. Plain `center` here would center the row even once it overflows,
+   which most browsers then refuse to let you scroll into on one side — the last card(s)
+   would be stuck permanently cut off no matter how far you swiped. */
 .home__work-scroller-inner {
   display: flex;
   gap: var(--space-4);
   min-width: 100%;
-  justify-content: center;
+  justify-content: safe center;
 }
 
 .home__work-card {
@@ -236,7 +238,7 @@
   display: flex;
   gap: var(--space-4);
   min-width: 100%;
-  justify-content: center;
+  justify-content: safe center;
 }
 
 .home__contact-card {
