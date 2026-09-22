@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { to: '/admin/enquiries', label: 'Enquiries', icon: '✉️' },
   { to: '/admin/activity', label: 'Activity', icon: '📜' },
   { to: '/admin/users', label: 'Admin users', icon: '🔑' },
+  { to: '/admin/analytics', label: 'Analytics', icon: '📊' },
 ];
 
 // A linked staff login (role 'staff') only ever sees what concerns them — their own

@@ -52,11 +52,6 @@
   font-size: var(--text-2xl);
   margin-top: var(--space-1);
 }
-.stat-card__sublabel {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  margin-top: var(--space-1);
-}
 
 /* Variants for the Overview stat grid — all still drawn from the existing token palette
    (ink/pink/semantic colors), just applied as card backgrounds instead of only text, for
@@ -122,11 +117,6 @@
 .admin-chart-card__range {
   display: flex;
   gap: var(--space-1);
-}
-.admin-chart-card__grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-6);
 }
 
 .admin-quick-actions {

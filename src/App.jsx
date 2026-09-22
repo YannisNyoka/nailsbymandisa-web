@@ -52,6 +52,7 @@ const AdminGalleryPage = lazyNamed(() => import('./pages/admin/AdminGalleryPage.
 const AdminGalleryModerationPage = lazyNamed(() => import('./pages/admin/AdminGalleryModerationPage.jsx'), 'AdminGalleryModerationPage');
 const AdminComposeNotificationPage = lazyNamed(() => import('./pages/admin/AdminComposeNotificationPage.jsx'), 'AdminComposeNotificationPage');
 const AdminUsersPage = lazyNamed(() => import('./pages/admin/AdminUsersPage.jsx'), 'AdminUsersPage');
+const AdminAnalyticsPage = lazyNamed(() => import('./pages/admin/AdminAnalyticsPage.jsx'), 'AdminAnalyticsPage');
 const AdminSchedulePage = lazyNamed(() => import('./pages/admin/AdminSchedulePage.jsx'), 'AdminSchedulePage');
 const AdminHomepagePage = lazyNamed(() => import('./pages/admin/AdminHomepagePage.jsx'), 'AdminHomepagePage');
 const AdminEnquiriesPage = lazyNamed(() => import('./pages/admin/AdminEnquiriesPage.jsx'), 'AdminEnquiriesPage');
@@ -109,6 +110,7 @@ export function App() {
             <Route path="compose-notification" element={<AdminComposeNotificationPage />} />
             <Route path="enquiries" element={<AdminEnquiriesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
           </Route>
         </Route>
 

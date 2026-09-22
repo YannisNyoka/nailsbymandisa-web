@@ -13,6 +13,12 @@ export function SimpleBarChart({ points, series }) {
 
   const groupWidth = innerW / points.length;
   const barWidth = Math.min(14, (groupWidth * 0.7) / series.length);
+  // A fixed 2px gap between bars works fine at a week/month scale, but at a year scale
+  // (365 points) barWidth itself can shrink below 2px, which used to make this negative —
+  // an invalid SVG rect width that Chrome throws on for every single bar. Scale the gap
+  // down with the bar instead, and never let the drawn width go to (or below) zero.
+  const barGap = Math.min(2, barWidth * 0.3);
+  const rectWidth = Math.max(0.5, barWidth - barGap);
   const labelStep = Math.max(1, Math.ceil(points.length / 7));
 
   return (
@@ -28,7 +34,7 @@ export function SimpleBarChart({ points, series }) {
               const x = groupX - (series.length * barWidth) / 2 + seriesIndex * barWidth;
               const y = PADDING.top + innerH - barHeight;
               return (
-                <rect key={s.key} x={x} y={y} width={barWidth - 2} height={barHeight} style={{ fill: s.color }} rx={2}>
+                <rect key={s.key} x={x} y={y} width={rectWidth} height={barHeight} style={{ fill: s.color }} rx={2}>
                   <title>{`${p.date} — ${s.label}: ${value}`}</title>
                 </rect>
               );
