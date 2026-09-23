@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Button, useToast } from '../../design-system';
 import './AdminSchedulePage.css';
 
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-const WEEKDAY_LABELS = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
 const SLOT_MINUTES = 30;
 const DAY_START = '07:00';
 const DAY_END = '20:00';
+const HOUR_SLOTS = Array.from({ length: 13 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`); // 07:00–19:00
+
+const WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat('en-ZA', { weekday: 'short' });
+const DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short' });
 
 function toDateString(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -86,14 +90,25 @@ export function AdminSchedulePage() {
   }, [date]);
 
   const [weekAppointments, setWeekAppointments] = useState({});
+  const [weekBlocks, setWeekBlocks] = useState([]);
+  // Rolling 7-day window starting from the selected date (not Monday-aligned) — matches
+  // "This Week" meaning "today through 6 days from now", so switching staff or hitting
+  // Prev/Next always centers on where you're actually looking, not a fixed calendar week.
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(date, i));
+
   const loadWeek = useCallback(async () => {
     if (!selectedStaffId) return;
-    const weekStart = addDays(date, -((new Date(`${date}T00:00:00`).getDay() + 6) % 7)); // Monday of this week
-    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const results = await Promise.all(
-      days.map((d) => apiClient.get(`/appointments?date=${d}&employeeId=${selectedStaffId}&pageSize=50`))
-    );
-    setWeekAppointments(Object.fromEntries(days.map((d, i) => [d, results[i].appointments.filter((a) => a.status !== 'cancelled')])));
+    const weekEnd = addDays(date, 6);
+    // No employeeId filter here — a salon-wide block (employeeId: null) must still show for
+    // this staff member, so filtering happens client-side (isWithinBlock), same as the
+    // Daily Overview grid already does.
+    const [results, { blocks: b }] = await Promise.all([
+      Promise.all(weekDays.map((d) => apiClient.get(`/appointments?date=${d}&employeeId=${selectedStaffId}&pageSize=50`))),
+      apiClient.get(`/availability?dateFrom=${date}&dateTo=${weekEnd}`),
+    ]);
+    setWeekAppointments(Object.fromEntries(weekDays.map((d, i) => [d, results[i].appointments.filter((a) => a.status !== 'cancelled')])));
+    setWeekBlocks(b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, selectedStaffId]);
 
   useEffect(() => {
@@ -109,8 +124,9 @@ export function AdminSchedulePage() {
     return a.serviceIds.map((id) => servicesById[id]?.name || '—').join(', ');
   }
 
-  const weekStart = addDays(date, -((new Date(`${date}T00:00:00`).getDay() + 6) % 7));
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const selectedStaff = staff.find((s) => s._id === selectedStaffId);
+  const weekRangeLabel = `${WEEKDAY_SHORT_FORMATTER.format(new Date(`${weekDays[0]}T00:00:00`))}, ${DAY_MONTH_FORMATTER.format(new Date(`${weekDays[0]}T00:00:00`))} – ${WEEKDAY_SHORT_FORMATTER.format(new Date(`${weekDays[6]}T00:00:00`))}, ${DAY_MONTH_FORMATTER.format(new Date(`${weekDays[6]}T00:00:00`))}`;
+  const isCurrentWeek = date === toDateString(new Date());
 
   return (
     <div>
@@ -125,17 +141,42 @@ export function AdminSchedulePage() {
         </div>
       </div>
 
-      <div className="admin-schedule__date-nav">
-        <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, mode === 'daily' ? -1 : -7))}>‹ Prev</Button>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, mode === 'daily' ? 1 : 7))}>Next ›</Button>
-        <Button size="sm" variant="secondary" onClick={() => setDate(toDateString(new Date()))}>Today</Button>
-        {mode === 'weekly' && !isStaff && (
-          <select value={selectedStaffId} onChange={(e) => setSelectedStaffId(e.target.value)}>
-            {staff.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-        )}
-      </div>
+      {mode === 'daily' ? (
+        <div className="admin-schedule__date-nav">
+          <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, -1))}>‹ Prev</Button>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, 1))}>Next ›</Button>
+          <Button size="sm" variant="secondary" onClick={() => setDate(toDateString(new Date()))}>Today</Button>
+        </div>
+      ) : (
+        !isStaff && (
+          <div className="admin-schedule__staff-chips">
+            {staff.map((s) => (
+              <button
+                key={s._id}
+                type="button"
+                className={`admin-schedule__staff-chip${selectedStaffId === s._id ? ' admin-schedule__staff-chip--active' : ''}`}
+                onClick={() => setSelectedStaffId(s._id)}
+              >
+                <span className="admin-schedule__staff-avatar" aria-hidden="true">{s.name.charAt(0).toUpperCase()}</span>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        )
+      )}
+
+      {mode === 'weekly' && (
+        <div className="admin-schedule__date-nav">
+          <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, -7))}>‹ Prev Week</Button>
+          <span className="admin-schedule__week-range">{weekRangeLabel}</span>
+          <Button size="sm" variant="secondary" onClick={() => setDate((d) => addDays(d, 7))}>Next Week ›</Button>
+          <Button size="sm" variant={isCurrentWeek ? 'primary' : 'secondary'} onClick={() => setDate(toDateString(new Date()))}>
+            This Week
+          </Button>
+          <Link to="/admin/staff"><Button size="sm" variant="secondary">⚙ Working Hours</Button></Link>
+        </div>
+      )}
 
       {mode === 'daily' ? (
         staff.length === 0 ? (
@@ -176,19 +217,46 @@ export function AdminSchedulePage() {
             </table>
           </div>
         )
+      ) : !selectedStaff ? (
+        <p>No active staff to schedule.</p>
       ) : (
-        <div className="admin-schedule__week-grid">
-          {weekDays.map((d) => (
-            <div key={d} className="admin-schedule__week-day">
-              <p className="admin-schedule__week-day-label">{WEEKDAY_LABELS[weekdayKeyFor(d)]} {d.slice(5)}</p>
-              {(weekAppointments[d] || []).length === 0 && <p className="admin-page__muted">No bookings</p>}
-              {(weekAppointments[d] || []).map((a) => (
-                <div key={a._id} className="admin-schedule__week-appt">
-                  <strong>{a.startTime}</strong> {a.clientName || 'Guest'} — {serviceNames(a)}
-                </div>
+        <div className="admin-schedule__grid-wrapper">
+          <table className="admin-schedule__grid">
+            <thead>
+              <tr>
+                <th>Time</th>
+                {weekDays.map((d) => (
+                  <th key={d}>
+                    {WEEKDAY_SHORT_FORMATTER.format(new Date(`${d}T00:00:00`))}
+                    <br />
+                    {d.slice(8, 10)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {HOUR_SLOTS.map((slot) => (
+                <tr key={slot}>
+                  <td className="admin-schedule__time-label">{slot}</td>
+                  {weekDays.map((d) => {
+                    const weekday = weekdayKeyFor(d);
+                    const open = isWithinShift(slot, selectedStaff.workingHours?.[weekday]);
+                    const blocked = open && isWithinBlock(slot, weekBlocks.filter((b) => b.date === d), selectedStaff._id);
+                    const appt = open && !blocked && appointmentAt(slot, weekAppointments[d] || [], selectedStaff._id);
+                    let cellClass = 'admin-schedule__cell--closed';
+                    if (open) cellClass = 'admin-schedule__cell--open';
+                    if (blocked) cellClass = 'admin-schedule__cell--blocked';
+                    return (
+                      <td key={d} className={`admin-schedule__cell ${cellClass}`}>
+                        {blocked && 'Blocked'}
+                        {appt && <span className="admin-schedule__appt-chip">{appt.clientName || 'Guest'}</span>}
+                      </td>
+                    );
+                  })}
+                </tr>
               ))}
-            </div>
-          ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

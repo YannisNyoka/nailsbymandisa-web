@@ -66,23 +66,55 @@
   white-space: normal;
 }
 
-.admin-schedule__week-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--space-3);
+.admin-schedule__staff-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
 }
-.admin-schedule__week-day {
-  background: var(--color-surface);
+.admin-schedule__staff-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  min-height: 120px;
-}
-.admin-schedule__week-day-label {
-  margin: 0 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
   font-weight: 600;
-}
-.admin-schedule__week-appt {
   font-size: var(--text-sm);
-  margin-bottom: var(--space-2);
+  cursor: pointer;
+}
+.admin-schedule__staff-chip--active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-muted);
+  color: var(--color-accent-hover);
+}
+.admin-schedule__staff-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.admin-schedule__appt-chip {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-accent-hover);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  white-space: normal;
+}
+
+.admin-schedule__week-range {
+  font-weight: 600;
+  white-space: nowrap;
 }
