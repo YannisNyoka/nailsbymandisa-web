@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { apiClient } from '../../lib/apiClient.js';
 import { Button, FormField, useToast } from '../../design-system';
 import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
+import { LoadError } from '../../components/LoadError.jsx';
 import './BookingWizard.css';
 
 const STEPS = ['Services', 'Staff', 'Date & time', 'Details', 'Review'];
@@ -27,6 +28,7 @@ export function BookingWizard() {
   const [stepIndex, setStepIndex] = useState(0);
   const [services, setServices] = useState(null);
   const [staff, setStaff] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
   const [employeeId, setEmployeeId] = useState('any');
@@ -66,7 +68,8 @@ export function BookingWizard() {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
+  function loadServicesAndStaff() {
+    setLoadError(null);
     Promise.all([apiClient.get('/services'), apiClient.get('/staff')])
       .then(([{ services: s }, { employees: e }]) => {
         setServices(s);
@@ -78,7 +81,15 @@ export function BookingWizard() {
           setSelectedServiceIds([preselectId]);
         }
       })
-      .catch((err) => showToast(err.message || 'Could not load services.', { variant: 'error' }));
+      .catch((err) => {
+        const message = err.message || 'Could not load services.';
+        setLoadError(message);
+        showToast(message, { variant: 'error' });
+      });
+  }
+
+  useEffect(() => {
+    loadServicesAndStaff();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -201,6 +212,7 @@ export function BookingWizard() {
     }
   }
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadServicesAndStaff} />;
   if (!services || !staff) return <p>Loading&hellip;</p>;
 
   return (

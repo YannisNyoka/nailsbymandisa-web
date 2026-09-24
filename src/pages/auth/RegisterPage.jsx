@@ -77,7 +77,12 @@ export function RegisterPage() {
       <FormField label="Referral code" hint="Optional — got a code from a friend?">
         <input value={form.referralCode} onChange={update('referralCode')} />
       </FormField>
-      <Button type="submit" className="auth-form__submit" loading={submitting}>
+      <Button
+        type="submit"
+        className="auth-form__submit"
+        loading={submitting}
+        disabled={!form.firstName || !form.lastName || !form.email || !form.password}
+      >
         Create account
       </Button>
       <p className="auth-form__footer">

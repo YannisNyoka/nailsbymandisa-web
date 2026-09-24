@@ -69,7 +69,11 @@ export function AdminUsersPage() {
   }, [page]);
 
   useEffect(() => {
-    apiClient.get('/staff').then(({ employees: all }) => setEmployees(all.filter((e) => e.isActive)));
+    apiClient
+      .get('/staff')
+      .then(({ employees: all }) => setEmployees(all.filter((e) => e.isActive)))
+      .catch((err) => showToast(err.message || 'Could not load staff.', { variant: 'error' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const employeesById = Object.fromEntries(employees.map((e) => [e._id, e]));
@@ -113,9 +117,14 @@ export function AdminUsersPage() {
   }
 
   async function handleRevoke() {
-    await apiClient.post(`/admin/users/${revokeTarget._id}/revoke`);
-    showToast('Admin access revoked.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.post(`/admin/users/${revokeTarget._id}/revoke`);
+      showToast('Admin access revoked.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not revoke access.', { variant: 'error' });
+      throw err;
+    }
   }
 
   const columns = [

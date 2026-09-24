@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import './AccountPages.css';
 
 const STATUS_VARIANT = { pending: 'warning', active: 'success', cancelled: 'neutral' };
@@ -9,15 +10,26 @@ const STATUS_VARIANT = { pending: 'warning', active: 'success', cancelled: 'neut
 export function GiftCardsPage() {
   const { showToast } = useToast();
   const [cards, setCards] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
-  useEffect(() => {
+  function loadOrShowError() {
+    setLoadError(null);
     apiClient
       .get('/gift-cards/me')
       .then(({ giftCards }) => setCards(giftCards))
-      .catch((err) => showToast(err.message || 'Could not load your gift cards.', { variant: 'error' }));
+      .catch((err) => {
+        const message = err.message || 'Could not load your gift cards.';
+        setLoadError(message);
+        showToast(message, { variant: 'error' });
+      });
+  }
+
+  useEffect(() => {
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!cards) return <p>Loading&hellip;</p>;
 
   return (

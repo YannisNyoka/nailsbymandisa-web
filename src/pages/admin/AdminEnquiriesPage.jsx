@@ -50,7 +50,13 @@ export function AdminEnquiriesPage() {
       header: '',
       render: (e) =>
         !e.isRead && (
-          <Button variant="secondary" size="sm" onClick={() => markRead(e._id)} loading={markingId === e._id}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => markRead(e._id)}
+            loading={markingId === e._id}
+            disabled={markingId !== null && markingId !== e._id}
+          >
             Mark read
           </Button>
         ),

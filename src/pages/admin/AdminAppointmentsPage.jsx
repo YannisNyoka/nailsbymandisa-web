@@ -53,18 +53,26 @@ export function AdminAppointmentsPage() {
   }, [load]);
 
   useEffect(() => {
-    Promise.all([apiClient.get('/services'), apiClient.get('/staff')]).then(([{ services: s }, { employees }]) => {
-      setServices(s);
-      setStaff(employees);
-      setServicesById(Object.fromEntries(s.map((x) => [x._id, x])));
-      setStaffById(Object.fromEntries(employees.map((x) => [x._id, x])));
-    });
+    Promise.all([apiClient.get('/services'), apiClient.get('/staff')])
+      .then(([{ services: s }, { employees }]) => {
+        setServices(s);
+        setStaff(employees);
+        setServicesById(Object.fromEntries(s.map((x) => [x._id, x])));
+        setStaffById(Object.fromEntries(employees.map((x) => [x._id, x])));
+      })
+      .catch((err) => showToast(err.message || 'Could not load filter options.', { variant: 'error' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleCancel() {
-    await apiClient.post(`/appointments/${cancelTarget._id}/cancel`, { reason: 'Cancelled by admin' });
-    showToast('Appointment cancelled.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.post(`/appointments/${cancelTarget._id}/cancel`, { reason: 'Cancelled by admin' });
+      showToast('Appointment cancelled.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not cancel this appointment.', { variant: 'error' });
+      throw err;
+    }
   }
 
   function exportRows() {

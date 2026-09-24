@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import './AccountPages.css';
 
 const STATUS_VARIANT = {
@@ -23,6 +24,7 @@ export function BookingsPage() {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [rescheduleTarget, setRescheduleTarget] = useState(null);
   const [payingId, setPayingId] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const load = useCallback(async () => {
     const [{ appointments: list }, { services }, { employees }] = await Promise.all([
@@ -35,15 +37,29 @@ export function BookingsPage() {
     setStaffById(Object.fromEntries(employees.map((e) => [e._id, e])));
   }, []);
 
+  function loadOrShowError() {
+    setLoadError(null);
+    load().catch((err) => {
+      const message = err.message || 'Could not load your bookings.';
+      setLoadError(message);
+      showToast(message, { variant: 'error' });
+    });
+  }
+
   useEffect(() => {
-    load().catch((err) => showToast(err.message || 'Could not load your bookings.', { variant: 'error' }));
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleCancel(reason) {
-    await apiClient.post(`/appointments/${cancelTarget._id}/cancel`, { reason: reason || null });
-    showToast('Booking cancelled.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.post(`/appointments/${cancelTarget._id}/cancel`, { reason: reason || null });
+      showToast('Booking cancelled.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not cancel this booking.', { variant: 'error' });
+      throw err;
+    }
   }
 
   // Only a paid appointment holds its slot (see bookingService.js) — a pending one is
@@ -60,6 +76,7 @@ export function BookingsPage() {
     }
   }
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!appointments) return <p>Loading your bookings&hellip;</p>;
 
   return (

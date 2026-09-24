@@ -67,7 +67,7 @@ export function GiftCardPurchasePage() {
       <FormField label="Recipient email" hint="Optional — leave blank to buy it for yourself">
         <input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} />
       </FormField>
-      <Button type="submit" className="auth-form__submit" loading={submitting}>
+      <Button type="submit" className="auth-form__submit" loading={submitting} disabled={!isAuthenticated && !purchaserEmail}>
         Continue to payment
       </Button>
     </form>

@@ -73,7 +73,7 @@ export function ProfilePage() {
           <FormField label="Email">
             <input value={user.email} disabled />
           </FormField>
-          <Button type="submit" loading={savingProfile}>
+          <Button type="submit" loading={savingProfile} disabled={!profile.firstName || !profile.lastName}>
             Save changes
           </Button>
         </form>
@@ -103,7 +103,12 @@ export function ProfilePage() {
               onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))}
             />
           </FormField>
-          <Button type="submit" variant="secondary" loading={changingPassword}>
+          <Button
+            type="submit"
+            variant="secondary"
+            loading={changingPassword}
+            disabled={!passwords.currentPassword || !passwords.newPassword}
+          >
             Change password
           </Button>
         </form>

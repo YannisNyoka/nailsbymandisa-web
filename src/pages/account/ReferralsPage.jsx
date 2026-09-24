@@ -1,21 +1,33 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, Button, useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import './AccountPages.css';
 
 export function ReferralsPage() {
   const { showToast } = useToast();
   const [data, setData] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
-  useEffect(() => {
+  function loadOrShowError() {
+    setLoadError(null);
     apiClient
       .get('/referrals/me')
       .then(setData)
-      .catch((err) => showToast(err.message || 'Could not load your referrals.', { variant: 'error' }));
+      .catch((err) => {
+        const message = err.message || 'Could not load your referrals.';
+        setLoadError(message);
+        showToast(message, { variant: 'error' });
+      });
+  }
+
+  useEffect(() => {
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!data) return <p>Loading&hellip;</p>;
 
   const shareLink = `${window.location.origin}/register?ref=${data.referralCode}`;

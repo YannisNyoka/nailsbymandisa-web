@@ -174,7 +174,10 @@ export function AdminSchedulePage() {
           <Button size="sm" variant={isCurrentWeek ? 'primary' : 'secondary'} onClick={() => setDate(toDateString(new Date()))}>
             This Week
           </Button>
-          <Link to="/admin/staff"><Button size="sm" variant="secondary">⚙ Working Hours</Button></Link>
+          {/* /admin/staff isn't in a staff account's allowed paths — AdminLayout would
+              silently bounce them back to /admin with no explanation, a confusing dead
+              click. Only admins can actually get anywhere from this button. */}
+          {!isStaff && <Link to="/admin/staff"><Button size="sm" variant="secondary">⚙ Working Hours</Button></Link>}
         </div>
       )}
 

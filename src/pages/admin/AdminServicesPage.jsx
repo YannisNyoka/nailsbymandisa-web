@@ -88,9 +88,14 @@ export function AdminServicesPage() {
   }
 
   async function handleDelete() {
-    await apiClient.delete(`/services/${deleteTarget._id}`);
-    showToast('Service deactivated.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.delete(`/services/${deleteTarget._id}`);
+      showToast('Service deactivated.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not deactivate this service.', { variant: 'error' });
+      throw err;
+    }
   }
 
   const columns = [

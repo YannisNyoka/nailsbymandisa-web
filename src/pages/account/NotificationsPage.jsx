@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { Button, useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import './AccountPages.css';
 
 export function NotificationsPage() {
@@ -8,14 +9,24 @@ export function NotificationsPage() {
   const [data, setData] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   const load = useCallback(async () => {
     const result = await apiClient.get('/notifications');
     setData(result);
   }, []);
 
+  function loadOrShowError() {
+    setLoadError(null);
+    load().catch((err) => {
+      const message = err.message || 'Could not load notifications.';
+      setLoadError(message);
+      showToast(message, { variant: 'error' });
+    });
+  }
+
   useEffect(() => {
-    load().catch((err) => showToast(err.message || 'Could not load notifications.', { variant: 'error' }));
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,6 +66,7 @@ export function NotificationsPage() {
     }
   }
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!data) return <p>Loading notifications&hellip;</p>;
 
   return (

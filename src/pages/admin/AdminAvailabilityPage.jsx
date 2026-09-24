@@ -21,7 +21,10 @@ export function AdminAvailabilityPage() {
 
   useEffect(() => {
     load().catch((err) => showToast(err.message || 'Could not load blocked slots.', { variant: 'error' }));
-    apiClient.get('/staff').then(({ employees }) => setStaff(employees));
+    apiClient
+      .get('/staff')
+      .then(({ employees }) => setStaff(employees))
+      .catch((err) => showToast(err.message || 'Could not load staff.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,9 +63,14 @@ export function AdminAvailabilityPage() {
   }
 
   async function handleDelete() {
-    await apiClient.delete(`/availability/${deleteTarget._id}`);
-    showToast('Block removed.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.delete(`/availability/${deleteTarget._id}`);
+      showToast('Block removed.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not remove this block.', { variant: 'error' });
+      throw err;
+    }
   }
 
   const staffById = Object.fromEntries(staff.map((s) => [s._id, s]));

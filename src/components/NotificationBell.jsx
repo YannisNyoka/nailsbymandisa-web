@@ -25,10 +25,15 @@ export function NotificationBell() {
   const [data, setData] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [clearing, setClearing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const detailsRef = useRef(null);
 
   function load() {
-    apiClient.get('/notifications').then(setData).catch(() => {});
+    setLoadError(false);
+    apiClient
+      .get('/notifications')
+      .then(setData)
+      .catch(() => setLoadError(true));
   }
 
   useEffect(() => {
@@ -111,7 +116,15 @@ export function NotificationBell() {
             </button>
           </div>
         </div>
-        {!data || data.notifications.length === 0 ? (
+        {loadError ? (
+          <div className="notification-bell__empty">
+            <span className="notification-bell__empty-icon" aria-hidden="true">⚠️</span>
+            <p>Could not load notifications</p>
+            <button type="button" className="notification-bell__clear-all" onClick={load}>
+              Try again
+            </button>
+          </div>
+        ) : !data || data.notifications.length === 0 ? (
           <div className="notification-bell__empty">
             <span className="notification-bell__empty-icon" aria-hidden="true">🔔</span>
             <p>No notifications yet</p>

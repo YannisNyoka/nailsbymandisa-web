@@ -70,9 +70,14 @@ export function AdminGalleryPage() {
   }
 
   async function handleDelete() {
-    await apiClient.delete(`/gallery/${deleteTarget._id}`);
-    showToast('Removed.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.delete(`/gallery/${deleteTarget._id}`);
+      showToast('Removed.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not remove this item.', { variant: 'error' });
+      throw err;
+    }
   }
 
   const columns = [

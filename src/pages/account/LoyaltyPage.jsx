@@ -1,21 +1,33 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../../lib/apiClient.js';
 import { useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import './AccountPages.css';
 import './LoyaltyPage.css';
 
 export function LoyaltyPage() {
   const { showToast } = useToast();
   const [ledger, setLedger] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
-  useEffect(() => {
+  function loadOrShowError() {
+    setLoadError(null);
     apiClient
       .get('/loyalty/me')
       .then(setLedger)
-      .catch((err) => showToast(err.message || 'Could not load your loyalty account.', { variant: 'error' }));
+      .catch((err) => {
+        const message = err.message || 'Could not load your loyalty account.';
+        setLoadError(message);
+        showToast(message, { variant: 'error' });
+      });
+  }
+
+  useEffect(() => {
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!ledger) return <p>Loading&hellip;</p>;
 
   const nextTier = ledger.tiers.find((t) => t.minLifetimePoints > ledger.tier.minLifetimePoints);

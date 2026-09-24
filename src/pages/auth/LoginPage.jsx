@@ -48,7 +48,7 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
       </FormField>
-      <Button type="submit" className="auth-form__submit" loading={submitting}>
+      <Button type="submit" className="auth-form__submit" loading={submitting} disabled={!email || !password}>
         Log in
       </Button>
       <p className="auth-form__footer">

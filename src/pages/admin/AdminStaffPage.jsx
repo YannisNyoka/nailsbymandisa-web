@@ -80,9 +80,14 @@ export function AdminStaffPage() {
   }
 
   async function handleDelete() {
-    await apiClient.delete(`/staff/${deleteTarget._id}`);
-    showToast('Staff member deactivated.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.delete(`/staff/${deleteTarget._id}`);
+      showToast('Staff member deactivated.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not deactivate this staff member.', { variant: 'error' });
+      throw err;
+    }
   }
 
   const columns = [

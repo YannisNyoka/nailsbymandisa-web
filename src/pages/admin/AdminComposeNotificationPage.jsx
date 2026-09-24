@@ -36,6 +36,9 @@ export function AdminComposeNotificationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientSearch]);
 
+  // Re-throws on failure (matching every other ConfirmDialog onConfirm in this app) so
+  // the broadcast confirm dialog stays open on a failed send instead of quietly closing
+  // as if it went through — the toast already explains what happened either way.
   async function send() {
     setSubmitting(true);
     try {
@@ -49,6 +52,7 @@ export function AdminComposeNotificationPage() {
       setClientSearch('');
     } catch (err) {
       showToast(err.message || 'Could not send.', { variant: 'error' });
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -60,7 +64,8 @@ export function AdminComposeNotificationPage() {
       setConfirmingBroadcast(true);
       return;
     }
-    await send();
+    // Already toasted by send() above — nothing more to do here on failure.
+    await send().catch(() => {});
   }
 
   const canSubmit = title && body && (mode === 'broadcast' || userId);

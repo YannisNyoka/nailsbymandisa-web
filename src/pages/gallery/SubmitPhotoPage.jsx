@@ -3,6 +3,7 @@ import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile } from '../../lib/uploadImage.js';
 import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { Badge, Button, FormField, useToast } from '../../design-system';
+import { LoadError } from '../../components/LoadError.jsx';
 import '../account/AccountPages.css';
 
 const STATUS_VARIANT = { pending: 'warning', approved: 'success', rejected: 'danger' };
@@ -15,14 +16,24 @@ export function SubmitPhotoPage() {
   const [caption, setCaption] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [mine, setMine] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   async function load() {
     const { submissions } = await apiClient.get('/client-gallery/mine');
     setMine(submissions);
   }
 
+  function loadOrShowError() {
+    setLoadError(null);
+    load().catch((err) => {
+      const message = err.message || 'Could not load your submissions.';
+      setLoadError(message);
+      showToast(message, { variant: 'error' });
+    });
+  }
+
   useEffect(() => {
-    load().catch((err) => showToast(err.message || 'Could not load your submissions.', { variant: 'error' }));
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -70,7 +81,9 @@ export function SubmitPhotoPage() {
       </section>
 
       <h2>Your submissions</h2>
-      {!mine ? (
+      {loadError ? (
+        <LoadError message={loadError} onRetry={loadOrShowError} />
+      ) : !mine ? (
         <p>Loading&hellip;</p>
       ) : (
         <ul className="booking-list">

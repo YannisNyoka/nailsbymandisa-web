@@ -5,6 +5,7 @@ import { apiClient } from '../../lib/apiClient.js';
 import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { useToast } from '../../design-system';
 import { optimizedImageUrl, optimizedVideoUrl } from '../../lib/cloudinaryUrl.js';
+import { LoadError } from '../../components/LoadError.jsx';
 import './GalleryPage.css';
 
 export function GalleryPage() {
@@ -14,6 +15,7 @@ export function GalleryPage() {
   const [curated, setCurated] = useState(null);
   const [submissions, setSubmissions] = useState(null);
   const [likingId, setLikingId] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   async function load() {
     const [{ gallery }, { submissions: subs }] = await Promise.all([
@@ -24,8 +26,17 @@ export function GalleryPage() {
     setSubmissions(subs);
   }
 
+  function loadOrShowError() {
+    setLoadError(null);
+    load().catch((err) => {
+      const message = err.message || 'Could not load the gallery.';
+      setLoadError(message);
+      showToast(message, { variant: 'error' });
+    });
+  }
+
   useEffect(() => {
-    load().catch((err) => showToast(err.message || 'Could not load the gallery.', { variant: 'error' }));
+    loadOrShowError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -61,6 +72,7 @@ export function GalleryPage() {
     }
   }
 
+  if (loadError) return <LoadError message={loadError} onRetry={loadOrShowError} />;
   if (!curated || !submissions) return <p>Loading gallery&hellip;</p>;
 
   return (

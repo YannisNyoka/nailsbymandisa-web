@@ -51,9 +51,14 @@ export function AdminClientsPage() {
 
   async function handleToggleBlock() {
     const action = blockTarget.isActive ? 'block' : 'unblock';
-    await apiClient.post(`/admin/clients/${blockTarget._id}/${action}`);
-    showToast(blockTarget.isActive ? 'Client blocked.' : 'Client unblocked.', { variant: 'success' });
-    await load();
+    try {
+      await apiClient.post(`/admin/clients/${blockTarget._id}/${action}`);
+      showToast(blockTarget.isActive ? 'Client blocked.' : 'Client unblocked.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || `Could not ${action} this client.`, { variant: 'error' });
+      throw err;
+    }
   }
 
   const columns = [
