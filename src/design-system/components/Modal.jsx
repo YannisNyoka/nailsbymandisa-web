@@ -8,7 +8,7 @@ const FOCUSABLE_SELECTOR =
 // §7.6 — every modal traps focus, closes on Escape, and is marked as a dialog for
 // assistive tech. This is the single Modal every confirmation/form dialog in the app
 // should be built on top of (see ConfirmDialog) rather than each screen rolling its own.
-export function Modal({ isOpen, onClose, title, children, footer }) {
+export function Modal({ isOpen, onClose, title, children, footer, maxWidth }) {
   const dialogRef = useRef(null);
   const titleId = useId();
   const previouslyFocused = useRef(null);
@@ -67,6 +67,7 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
         aria-labelledby={titleId}
         ref={dialogRef}
         tabIndex={-1}
+        style={maxWidth ? { maxWidth } : undefined}
       >
         <div className="ds-modal__header">
           <h2 id={titleId} className="ds-modal__title">

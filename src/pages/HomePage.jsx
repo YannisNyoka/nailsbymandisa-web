@@ -5,6 +5,7 @@ import { useDocumentMeta } from '../lib/useDocumentMeta.js';
 import { formatHour } from '../lib/formatTime.js';
 import { buildWhatsAppLink } from '../lib/whatsapp.js';
 import { optimizedImageUrl, optimizedVideoUrl } from '../lib/cloudinaryUrl.js';
+import { Modal } from '../design-system';
 import './HomePage.css';
 
 const WEEKDAY_LABELS = [
@@ -119,6 +120,7 @@ export function HomePage() {
   const [services, setServices] = useState(null);
   const [heroMediaItems, setHeroMediaItems] = useState(FALLBACK_HERO_MEDIA_ITEMS);
   const [workItems, setWorkItems] = useState(null);
+  const [lightboxItem, setLightboxItem] = useState(null);
   const [settings, setSettings] = useState(null);
   useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.', { path: '/' });
 
@@ -174,7 +176,13 @@ export function HomePage() {
           <div className="home__work-scroller">
             <div className="home__work-scroller-inner">
               {workItems.map((item) => (
-                <Link key={item.id} to="/gallery" className="home__work-card">
+                <button
+                  key={item.id}
+                  type="button"
+                  className="home__work-card"
+                  onClick={() => setLightboxItem(item)}
+                  aria-label={item.type === 'video' ? 'Play video' : 'View image'}
+                >
                   <div className="home__work-card-media">
                     {item.type === 'video' ? (
                       <>
@@ -186,7 +194,7 @@ export function HomePage() {
                     )}
                   </div>
                   <p className="home__work-card-caption">{item.caption || 'Our work'}</p>
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -296,6 +304,31 @@ export function HomePage() {
           <p className="home__contact-swipe-hint">&larr; swipe to see more &rarr;</p>
         </section>
       )}
+
+      <Modal
+        isOpen={Boolean(lightboxItem)}
+        onClose={() => setLightboxItem(null)}
+        title={lightboxItem?.caption || 'Our work'}
+        maxWidth="min(90vw, 760px)"
+      >
+        {lightboxItem && (
+          lightboxItem.type === 'video' ? (
+            <video
+              key={lightboxItem.id}
+              src={optimizedVideoUrl(lightboxItem.url, { width: 1000 })}
+              controls
+              autoPlay
+              className="home__lightbox-media"
+            />
+          ) : (
+            <img
+              src={optimizedImageUrl(lightboxItem.url, { width: 1000 })}
+              alt={lightboxItem.caption || 'NailsByMandisa client work'}
+              className="home__lightbox-media"
+            />
+          )
+        )}
+      </Modal>
     </main>
   );
 }
