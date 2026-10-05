@@ -50,13 +50,16 @@ export function AdminOverviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Revenue is salon financial data, not staff-facing operational info — skipped
+  // entirely for a staff-scoped viewer (the API itself also withholds the fields).
   useEffect(() => {
+    if (isStaff) return;
     apiClient
       .get(`/admin/trends?metric=revenue&days=${revenueDays}`)
       .then(setRevenueTrend)
       .catch((err) => showToast(err.message || 'Could not load the revenue trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revenueDays]);
+  }, [revenueDays, isStaff]);
 
   useEffect(() => {
     apiClient
@@ -77,37 +80,43 @@ export function AdminOverviewPage() {
       <div className="stat-grid">
         <StatCard icon="📅" label="Bookings today" value={stats.appointmentsToday} variant="accent" />
         <StatCard icon="⏰" label="Upcoming" value={stats.upcomingConfirmed} variant="accent-muted" />
-        <StatCard icon="💰" label="Revenue today" value={formatCents(stats.revenueTodayCents)} variant="ink" />
-        <StatCard icon="📈" label="Revenue (week)" value={formatCents(stats.revenueWeekCents)} variant="ink" />
-        <StatCard icon="📊" label="Revenue (month)" value={formatCents(stats.revenueMonthCents)} variant="ink" />
+        {!isStaff && <StatCard icon="💰" label="Revenue today" value={formatCents(stats.revenueTodayCents)} variant="ink" />}
+        {!isStaff && <StatCard icon="📈" label="Revenue (week)" value={formatCents(stats.revenueWeekCents)} variant="ink" />}
+        {!isStaff && <StatCard icon="📊" label="Revenue (month)" value={formatCents(stats.revenueMonthCents)} variant="ink" />}
         <StatCard icon="✕" label="Cancellations" value={stats.cancellationsCount} variant="danger" />
         <StatCard icon="🚫" label="No-shows" value={stats.noShowsCount} variant="warning" />
         <StatCard icon="💳" label="Unpaid bookings" value={stats.unpaidBookings} />
       </div>
 
-      <div className="admin-chart-card">
-        <div className="admin-chart-card__header">
-          <h2>Revenue trend</h2>
-          <div className="admin-chart-card__range">
-            {RANGE_OPTIONS.map((opt) => (
-              <Button
-                key={opt.days}
-                size="sm"
-                variant={revenueDays === opt.days ? 'primary' : 'secondary'}
-                onClick={() => setRevenueDays(opt.days)}
-              >
-                {opt.label}
-              </Button>
-            ))}
+      {/* Revenue — including the trend chart below — is salon financial data, not
+          staff-facing operational info, so it's hidden entirely for a staff account
+          (the API itself also withholds these fields for a staff-scoped request, this
+          isn't the only thing standing between staff and seeing it). */}
+      {!isStaff && (
+        <div className="admin-chart-card">
+          <div className="admin-chart-card__header">
+            <h2>Revenue trend</h2>
+            <div className="admin-chart-card__range">
+              {RANGE_OPTIONS.map((opt) => (
+                <Button
+                  key={opt.days}
+                  size="sm"
+                  variant={revenueDays === opt.days ? 'primary' : 'secondary'}
+                  onClick={() => setRevenueDays(opt.days)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
           </div>
+          {revenueTrend && (
+            <SimpleLineChart
+              points={revenueTrend.points.map((p) => ({ date: p.date, value: p.revenueCents }))}
+              formatValue={(v) => `R${(v / 100).toFixed(0)}`}
+            />
+          )}
         </div>
-        {revenueTrend && (
-          <SimpleLineChart
-            points={revenueTrend.points.map((p) => ({ date: p.date, value: p.revenueCents }))}
-            formatValue={(v) => `R${(v / 100).toFixed(0)}`}
-          />
-        )}
-      </div>
+      )}
 
       <div className="admin-chart-card">
         <div className="admin-chart-card__header">

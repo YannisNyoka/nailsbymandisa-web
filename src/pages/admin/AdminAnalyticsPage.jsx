@@ -56,13 +56,17 @@ export function AdminAnalyticsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, refreshTick]);
 
+  // Revenue is salon financial data, not staff-facing operational info — skipped
+  // entirely for a staff-scoped viewer, matching the overview page and the API's own
+  // withholding of revenue fields for a staff-scoped request.
   useEffect(() => {
+    if (isStaff) return;
     apiClient
       .get(`/admin/trends?metric=revenue&days=${days}`)
       .then(setRevenueTrend)
       .catch((err) => showToast(err.message || 'Could not load the revenue trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick]);
+  }, [days, refreshTick, isStaff]);
 
   useEffect(() => {
     apiClient
@@ -109,10 +113,14 @@ export function AdminAnalyticsPage() {
     { label: 'No-shows', value: summary.noShowsCount, color: 'var(--color-warning)' },
   ].filter((i) => i.value > 0);
 
-  const revenueByTypeItems = [
-    { label: 'Bookings', value: summary.revenueBreakdown.bookingDepositCents, color: 'var(--color-accent)' },
-    { label: 'Gift cards', value: summary.revenueBreakdown.giftCardPurchaseCents, color: 'var(--color-success)' },
-  ].filter((i) => i.value > 0);
+  // revenueBreakdown is null for a staff-scoped summary (withheld server-side), so this
+  // stays empty for staff rather than reading off a null.
+  const revenueByTypeItems = summary.revenueBreakdown
+    ? [
+        { label: 'Bookings', value: summary.revenueBreakdown.bookingDepositCents, color: 'var(--color-accent)' },
+        { label: 'Gift cards', value: summary.revenueBreakdown.giftCardPurchaseCents, color: 'var(--color-success)' },
+      ].filter((i) => i.value > 0)
+    : [];
 
   const clientColumns = [
     { key: 'name', header: 'Client', render: (c) => <Link to={`/admin/clients/${c.userId}`}>{c.firstName} {c.lastName}</Link> },
@@ -135,13 +143,15 @@ export function AdminAnalyticsPage() {
       </div>
 
       <div className="analytics-stat-grid">
-        <AnalyticsStatCard
-          icon="💰"
-          iconVariant="success"
-          label="Combined revenue"
-          value={formatCents(summary.combinedRevenueCents)}
-          sublabel={`Last ${days} days`}
-        />
+        {!isStaff && (
+          <AnalyticsStatCard
+            icon="💰"
+            iconVariant="success"
+            label="Combined revenue"
+            value={formatCents(summary.combinedRevenueCents)}
+            sublabel={`Last ${days} days`}
+          />
+        )}
         <AnalyticsStatCard
           icon="📅"
           iconVariant="info"
@@ -183,15 +193,17 @@ export function AdminAnalyticsPage() {
           <h3>Daily bookings</h3>
           {bookingsTrend && <SimpleBarChart points={bookingsTrend.points} series={BOOKINGS_SERIES} />}
         </div>
-        <div>
-          <h3>Daily revenue</h3>
-          {revenueTrend && (
-            <SimpleLineChart
-              points={revenueTrend.points.map((p) => ({ date: p.date, value: p.revenueCents }))}
-              formatValue={(v) => `R${(v / 100).toFixed(0)}`}
-            />
-          )}
-        </div>
+        {!isStaff && (
+          <div>
+            <h3>Daily revenue</h3>
+            {revenueTrend && (
+              <SimpleLineChart
+                points={revenueTrend.points.map((p) => ({ date: p.date, value: p.revenueCents }))}
+                formatValue={(v) => `R${(v / 100).toFixed(0)}`}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <div className="analytics-card analytics-card--grid-2">
