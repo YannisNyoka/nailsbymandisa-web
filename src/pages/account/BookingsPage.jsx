@@ -22,11 +22,11 @@ function todayDateString() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Nothing in this app ever flips an appointment to 'completed' yet (see bookingService.js
-// — only 'pending_payment' / 'confirmed' / 'cancelled' / 'no_show' are ever set), so
-// gating "Book again" on that status alone would make it unreachable in practice. A
-// confirmed booking whose date has already passed was, as far as this app can tell,
-// honored — that's this app's actual definition of "service history" right now.
+// An appointment only flips to 'completed' via an hourly cron sweep (api's
+// bookingService.js completeDuePastAppointments), not the instant its slot ends — so a
+// still-'confirmed' booking whose date has already passed is also treated as "book
+// again"-eligible, to cover the gap before that next sweep runs rather than making the
+// customer wait up to an hour after their appointment to see the shortcut.
 function canBookAgain(appt) {
   return appt.status === 'completed' || (appt.status === 'confirmed' && appt.date < todayDateString());
 }
