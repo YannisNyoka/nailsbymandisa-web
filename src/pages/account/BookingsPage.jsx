@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, useToast } from '../../design-system';
 import { LoadError } from '../../components/LoadError.jsx';
@@ -14,6 +15,20 @@ const STATUS_VARIANT = {
 
 function formatCents(cents) {
   return `R${(cents / 100).toFixed(2)}`;
+}
+
+function todayDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Nothing in this app ever flips an appointment to 'completed' yet (see bookingService.js
+// — only 'pending_payment' / 'confirmed' / 'cancelled' / 'no_show' are ever set), so
+// gating "Book again" on that status alone would make it unreachable in practice. A
+// confirmed booking whose date has already passed was, as far as this app can tell,
+// honored — that's this app's actual definition of "service history" right now.
+function canBookAgain(appt) {
+  return appt.status === 'completed' || (appt.status === 'confirmed' && appt.date < todayDateString());
 }
 
 export function BookingsPage() {
@@ -128,6 +143,15 @@ export function BookingsPage() {
                   >
                     Cancel
                   </Button>
+                </div>
+              )}
+              {canBookAgain(appt) && (
+                <div className="booking-card__actions">
+                  <Link to={`/book?services=${appt.serviceIds.join(',')}&employeeId=${appt.employeeId}`}>
+                    <Button variant="secondary" size="sm">
+                      Book again
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

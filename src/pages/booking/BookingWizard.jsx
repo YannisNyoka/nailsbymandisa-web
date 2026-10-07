@@ -74,11 +74,28 @@ export function BookingWizard() {
       .then(([{ services: s }, { employees: e }]) => {
         setServices(s);
         setStaff(e);
-        // Coming from a service card on the home page ("Our services" — /book?service=<id>)
-        // pre-selects that service instead of dropping the visitor back at an empty list.
-        const preselectId = searchParams.get('service');
-        if (preselectId && s.some((service) => service._id === preselectId)) {
-          setSelectedServiceIds([preselectId]);
+
+        // Coming from a service card on the home page ("Our services" — /book?service=<id>),
+        // or the "Book again" shortcut on My bookings (/book?services=id1,id2&employeeId=xxx)
+        // — pre-fill what we can instead of dropping the visitor back at an empty wizard.
+        const preselectIds = searchParams.get('services')
+          ? searchParams.get('services').split(',').filter(Boolean)
+          : [searchParams.get('service')].filter(Boolean);
+        const validIds = preselectIds.filter((id) => s.some((service) => service._id === id));
+        if (validIds.length === 0) return;
+        setSelectedServiceIds(validIds);
+
+        // "Book again" also names the staff member from that past booking — only honor it,
+        // and only skip ahead to the date/time step, if they're still employed and still
+        // able to perform every one of those services (mirrors eligibleStaff's own check).
+        // Otherwise leave them on the staff step so a replacement can be chosen.
+        const preselectEmployeeId = searchParams.get('employeeId');
+        const employee = preselectEmployeeId && e.find((emp) => emp._id === preselectEmployeeId);
+        if (employee && (!employee.serviceIds || validIds.every((id) => employee.serviceIds.some((sid) => sid === id)))) {
+          setEmployeeId(employee._id);
+          setStepIndex(2);
+        } else if (preselectEmployeeId) {
+          setStepIndex(1);
         }
       })
       .catch((err) => {
