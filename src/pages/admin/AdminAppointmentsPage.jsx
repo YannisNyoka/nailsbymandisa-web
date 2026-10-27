@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { apiClient } from '../../lib/apiClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Badge, Button, ConfirmDialog, FormField, Pagination, Table, useToast } from '../../design-system';
+import { Badge, Button, ConfirmDialog, FormField, Modal, Pagination, Table, useToast } from '../../design-system';
 import './AdminPages.css';
 
 const STATUS_VARIANT = {
@@ -35,6 +35,7 @@ export function AdminAppointmentsPage() {
   const [serviceFilter, setServiceFilter] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState(null);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
@@ -138,10 +139,16 @@ export function AdminAppointmentsPage() {
       key: 'actions',
       header: '',
       render: (a) =>
-        !isStaff && ['pending_payment', 'confirmed'].includes(a.status) && (
-          <Button variant="danger" size="sm" onClick={() => setCancelTarget(a)}>
-            Cancel
-          </Button>
+        !isStaff &&
+        ['pending_payment', 'confirmed'].includes(a.status) && (
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <Button variant="secondary" size="sm" onClick={() => setRescheduleTarget(a)}>
+              Reschedule
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setCancelTarget(a)}>
+              Cancel
+            </Button>
+          </div>
         ),
     },
   ];
@@ -203,6 +210,69 @@ export function AdminAppointmentsPage() {
         confirmLabel="Cancel appointment"
         danger
       />
+
+      {rescheduleTarget && (
+        <RescheduleModal
+          appointment={rescheduleTarget}
+          onClose={() => setRescheduleTarget(null)}
+          onDone={async () => {
+            setRescheduleTarget(null);
+            await load();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// Same shape as the customer-facing RescheduleModal (account BookingsPage.jsx) — admin
+// goes through the same POST /:id/reschedule endpoint, which already allows an admin
+// actor to bypass both the ownership check and the cancellation-notice-window lockout
+// (bookingService.js's assertOwnerOrAdmin / rescheduleAppointment).
+function RescheduleModal({ appointment, onClose, onDone }) {
+  const { showToast } = useToast();
+  const [date, setDate] = useState(appointment.date);
+  const [startTime, setStartTime] = useState(appointment.startTime);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await apiClient.post(`/appointments/${appointment._id}/reschedule`, { date, startTime });
+      showToast('Appointment rescheduled.', { variant: 'success' });
+      await onDone();
+    } catch (err) {
+      showToast(err.message || 'Could not reschedule this appointment.', { variant: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={`Reschedule ${appointment.clientName || appointment.clientEmail || 'booking'}`}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} loading={submitting}>
+            Confirm new time
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate>
+        <FormField label="Date" required>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </FormField>
+        <FormField label="Start time" required hint="24-hour format, e.g. 14:00">
+          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        </FormField>
+      </form>
+    </Modal>
   );
 }
