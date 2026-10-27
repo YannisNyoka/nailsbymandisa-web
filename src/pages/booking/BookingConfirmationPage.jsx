@@ -257,15 +257,25 @@ export function BookingConfirmationPage() {
   const [payment, setPayment] = useState(null);
   const [settings, setSettings] = useState(null);
 
+  // Hits /check-payment rather than a plain GET — besides returning the appointment, it
+  // first asks Yoco directly whether the payment actually completed and confirms the
+  // booking if so (paymentsService.reconcilePendingPayment). This is a fallback for a
+  // webhook that was lost, delayed, or rejected: without it, a genuinely-paid customer
+  // could land here and watch their own slot sit unconfirmed until the unpaid-appointment
+  // cleanup cron cancels it out from under them. Works for a guest too (no account to
+  // authenticate with) — the route uses the same owner/admin/unclaimed-guest-booking
+  // check as checkout initiation, not a login requirement. Waiting for authLoading first
+  // (rather than polling immediately on mount) just makes sure a logged-in owner's very
+  // first request already carries their access token, not a split-second false "guest".
   useEffect(() => {
-    if (authLoading || !isAuthenticated || !appointmentId) return undefined;
+    if (authLoading || !appointmentId) return undefined;
 
     let cancelled = false;
     let timer;
 
     async function poll() {
       try {
-        const { appointment: fetched } = await apiClient.get(`/appointments/${appointmentId}`);
+        const { appointment: fetched } = await apiClient.post(`/appointments/${appointmentId}/check-payment`);
         if (cancelled) return;
         setAppointment(fetched);
         attemptsRef.current += 1;
@@ -282,7 +292,7 @@ export function BookingConfirmationPage() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [appointmentId, isAuthenticated, authLoading]);
+  }, [appointmentId, authLoading]);
 
   // Once confirmed, load what the receipt needs — service/stylist names (the
   // appointment doc only stores their ids) and the payment doc (for the
@@ -316,24 +326,12 @@ export function BookingConfirmationPage() {
     );
   }
 
-  // Guests have no account to authenticate a status lookup with — their confirmation
-  // arrives by email once the webhook confirms payment (see paymentsService).
-  if (!authLoading && !isAuthenticated) {
-    return (
-      <div className="booking-confirmation">
-        <h1>Thank you!</h1>
-        <p>We&rsquo;re processing your payment. You&rsquo;ll receive a confirmation email as soon as it clears.</p>
-        <Link to="/">Back to home</Link>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="booking-confirmation">
         <h1>Something went wrong</h1>
-        <p>We couldn&rsquo;t look up this booking. Check your account&rsquo;s bookings list, or contact us.</p>
-        <Link to="/account/bookings">My bookings</Link>
+        <p>We couldn&rsquo;t look up this booking. {isAuthenticated ? 'Check your account’s bookings list, or' : 'Please'} contact us.</p>
+        {isAuthenticated ? <Link to="/account/bookings">My bookings</Link> : <Link to="/contact">Contact us</Link>}
       </div>
     );
   }
@@ -355,7 +353,7 @@ export function BookingConfirmationPage() {
       <div className="booking-confirmation">
         <h1>Still processing&hellip;</h1>
         <p>Your payment is still being confirmed. This page will update automatically, or check back shortly.</p>
-        <Link to="/account/bookings">My bookings</Link>
+        {isAuthenticated ? <Link to="/account/bookings">My bookings</Link> : <Link to="/contact">Contact us</Link>}
       </div>
     );
   }
@@ -364,7 +362,7 @@ export function BookingConfirmationPage() {
     <div className="booking-confirmation">
       <h1>Booking not confirmed</h1>
       <p>This booking is currently &ldquo;{appointment.status.replace('_', ' ')}&rdquo;. If you expected a confirmation, please contact us.</p>
-      <Link to="/account/bookings">My bookings</Link>
+      {isAuthenticated ? <Link to="/account/bookings">My bookings</Link> : <Link to="/contact">Contact us</Link>}
     </div>
   );
 }
