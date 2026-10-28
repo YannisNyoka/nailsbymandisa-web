@@ -9,7 +9,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      // 'prompt' needs the app to show its own "update available" UI and call
+      // updateSW(true) — nothing in this app does that, so a new deploy sat installed
+      // but inactive until a user fully closed the app (not just refreshed), and every
+      // bug fix looked like it hadn't shipped. 'autoUpdate' takes over on the very next
+      // load instead.
+      registerType: 'autoUpdate',
       includeAssets: ['icons/icon-32.png', 'brand/logo-lockup.png'],
       manifest: {
         name: 'NailsByMandisa',
