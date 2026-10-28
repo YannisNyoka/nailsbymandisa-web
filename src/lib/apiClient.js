@@ -20,6 +20,31 @@ export function setAccessToken(token) {
   accessToken = token;
 }
 
+// The refresh token used to live in an httpOnly cookie, until a real repro showed mobile
+// browsers (Samsung Internet's default cross-site-cookie block among them) silently
+// refusing to store/send a cookie set by a different domain than the one being browsed
+// (this frontend on Vercel, the API on Render) — every page reload looked like a logout.
+// Kept in this origin's own localStorage instead: no cross-site cookie policy applies to
+// that. Wrapped in try/catch — private browsing mode can throw on access.
+const REFRESH_TOKEN_KEY = 'nbm_refresh_token';
+
+export function getRefreshToken() {
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setRefreshToken(token) {
+  try {
+    if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    else localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // Private browsing / storage disabled — session just won't survive a reload.
+  }
+}
+
 // AuthContext registers this so a 401 from any request (access token expired/invalid)
 // clears client-side auth state consistently, instead of each call site having to
 // remember to handle it.
@@ -48,7 +73,6 @@ async function request(path, { method = 'GET', body, headers = {}, skipUnauthori
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      credentials: 'include',
       headers: {
         ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
