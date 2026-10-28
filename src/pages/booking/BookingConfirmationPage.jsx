@@ -283,7 +283,18 @@ export function BookingConfirmationPage() {
           timer = setTimeout(poll, POLL_INTERVAL_MS);
         }
       } catch {
-        if (!cancelled) setError(true);
+        // A single failed request (a network blip, a slow cold-starting server) doesn't
+        // mean the booking failed — retry with the same budget as a "still pending"
+        // result, and only show the permanent error page once that's exhausted. Found via
+        // a real customer whose booking was actually confirmed in the database despite
+        // seeing this error, because the old code gave up after one failed attempt.
+        if (cancelled) return;
+        attemptsRef.current += 1;
+        if (attemptsRef.current < POLL_ATTEMPTS) {
+          timer = setTimeout(poll, POLL_INTERVAL_MS);
+        } else {
+          setError(true);
+        }
       }
     }
 
