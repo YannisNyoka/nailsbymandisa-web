@@ -35,7 +35,8 @@ export function AdminAppointmentsPage() {
   const [serviceFilter, setServiceFilter] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [cancelTarget, setCancelTarget] = useState(null);
-  const [rescheduleTarget, setRescheduleTarget] = useState(null);
+  const [completeTarget, setCompleteTarget] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
@@ -72,6 +73,17 @@ export function AdminAppointmentsPage() {
       await load();
     } catch (err) {
       showToast(err.message || 'Could not cancel this appointment.', { variant: 'error' });
+      throw err;
+    }
+  }
+
+  async function handleComplete() {
+    try {
+      await apiClient.post(`/appointments/${completeTarget._id}/complete`);
+      showToast('Appointment marked completed.', { variant: 'success' });
+      await load();
+    } catch (err) {
+      showToast(err.message || 'Could not mark this appointment completed.', { variant: 'error' });
       throw err;
     }
   }
@@ -141,12 +153,35 @@ export function AdminAppointmentsPage() {
       render: (a) =>
         !isStaff &&
         ['pending_payment', 'confirmed'].includes(a.status) && (
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <Button variant="secondary" size="sm" onClick={() => setRescheduleTarget(a)}>
-              Reschedule
+          <div className="admin-table-actions">
+            <Button
+              variant="secondary"
+              size="sm"
+              title="Edit"
+              aria-label="Edit appointment"
+              onClick={() => setEditTarget(a)}
+            >
+              ✎
             </Button>
-            <Button variant="danger" size="sm" onClick={() => setCancelTarget(a)}>
-              Cancel
+            {a.status === 'confirmed' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                title="Mark completed"
+                aria-label="Mark appointment completed"
+                onClick={() => setCompleteTarget(a)}
+              >
+                ✓
+              </Button>
+            )}
+            <Button
+              variant="danger"
+              size="sm"
+              title="Cancel"
+              aria-label="Cancel appointment"
+              onClick={() => setCancelTarget(a)}
+            >
+              ✕
             </Button>
           </div>
         ),
@@ -211,12 +246,22 @@ export function AdminAppointmentsPage() {
         danger
       />
 
-      {rescheduleTarget && (
-        <RescheduleModal
-          appointment={rescheduleTarget}
-          onClose={() => setRescheduleTarget(null)}
+      <ConfirmDialog
+        isOpen={Boolean(completeTarget)}
+        onClose={() => setCompleteTarget(null)}
+        onConfirm={handleComplete}
+        title="Mark this appointment completed?"
+        summary={completeTarget ? `Marks the ${completeTarget.date} ${completeTarget.startTime} booking as completed — use this once the service has actually been rendered.` : ''}
+        confirmLabel="Mark completed"
+      />
+
+      {editTarget && (
+        <EditAppointmentModal
+          appointment={editTarget}
+          staff={staff}
+          onClose={() => setEditTarget(null)}
           onDone={async () => {
-            setRescheduleTarget(null);
+            setEditTarget(null);
             await load();
           }}
         />
@@ -225,25 +270,28 @@ export function AdminAppointmentsPage() {
   );
 }
 
-// Same shape as the customer-facing RescheduleModal (account BookingsPage.jsx) — admin
-// goes through the same POST /:id/reschedule endpoint, which already allows an admin
-// actor to bypass both the ownership check and the cancellation-notice-window lockout
-// (bookingService.js's assertOwnerOrAdmin / rescheduleAppointment).
-function RescheduleModal({ appointment, onClose, onDone }) {
+// Admin-only edit: date/time, staff reassignment and notes, all through the same
+// POST /:id/reschedule endpoint the customer-facing reschedule flow uses — an admin actor
+// additionally bypasses the ownership check and the cancellation-notice-window lockout
+// (bookingService.js's assertOwnerOrAdmin / rescheduleAppointment), and is the only actor
+// allowed to send employeeId/notes at all.
+function EditAppointmentModal({ appointment, staff, onClose, onDone }) {
   const { showToast } = useToast();
   const [date, setDate] = useState(appointment.date);
   const [startTime, setStartTime] = useState(appointment.startTime);
+  const [employeeId, setEmployeeId] = useState(appointment.employeeId);
+  const [notes, setNotes] = useState(appointment.notes || '');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await apiClient.post(`/appointments/${appointment._id}/reschedule`, { date, startTime });
-      showToast('Appointment rescheduled.', { variant: 'success' });
+      await apiClient.post(`/appointments/${appointment._id}/reschedule`, { date, startTime, employeeId, notes });
+      showToast('Appointment updated.', { variant: 'success' });
       await onDone();
     } catch (err) {
-      showToast(err.message || 'Could not reschedule this appointment.', { variant: 'error' });
+      showToast(err.message || 'Could not update this appointment.', { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -253,14 +301,14 @@ function RescheduleModal({ appointment, onClose, onDone }) {
     <Modal
       isOpen
       onClose={onClose}
-      title={`Reschedule ${appointment.clientName || appointment.clientEmail || 'booking'}`}
+      title={`Edit ${appointment.clientName || appointment.clientEmail || 'booking'}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} loading={submitting}>
-            Confirm new time
+            Save changes
           </Button>
         </>
       }
@@ -271,6 +319,16 @@ function RescheduleModal({ appointment, onClose, onDone }) {
         </FormField>
         <FormField label="Start time" required hint="24-hour format, e.g. 14:00">
           <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        </FormField>
+        <FormField label="Staff" required>
+          <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
+            {staff.map((s) => (
+              <option key={s._id} value={s._id}>{s.name}</option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Notes">
+          <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </FormField>
       </form>
     </Modal>
