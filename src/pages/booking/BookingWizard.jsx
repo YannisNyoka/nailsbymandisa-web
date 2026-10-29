@@ -5,6 +5,7 @@ import { apiClient } from '../../lib/apiClient.js';
 import { Button, FormField, useToast } from '../../design-system';
 import { useDocumentMeta } from '../../lib/useDocumentMeta.js';
 import { LoadError } from '../../components/LoadError.jsx';
+import { SERVICE_CATEGORIES } from '../../lib/serviceCategories.js';
 import './BookingWizard.css';
 
 const STEPS = ['Services', 'Staff', 'Date & time', 'Details', 'Review'];
@@ -31,6 +32,7 @@ export function BookingWizard() {
   const [loadError, setLoadError] = useState(null);
 
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [employeeId, setEmployeeId] = useState('any');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -113,6 +115,13 @@ export function BookingWizard() {
   const selectedServices = useMemo(
     () => (services || []).filter((s) => selectedServiceIds.includes(s._id)),
     [services, selectedServiceIds]
+  );
+  // Filters which services are shown to pick from — doesn't touch selectedServiceIds, so
+  // switching categories (or a service already selected under a different filter) never
+  // silently drops a selection.
+  const visibleServices = useMemo(
+    () => (services || []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter),
+    [services, categoryFilter]
   );
   const totalDurationMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
   // Client-side estimate only — the server recomputes this authoritatively when the
@@ -246,8 +255,28 @@ export function BookingWizard() {
       {stepIndex === 0 && (
         <section>
           <h2>Choose your services</h2>
+          <div className="booking-wizard__category-filter" role="group" aria-label="Filter services by category">
+            <button
+              type="button"
+              className={`booking-wizard__category-chip${categoryFilter === 'all' ? ' booking-wizard__category-chip--active' : ''}`}
+              onClick={() => setCategoryFilter('all')}
+            >
+              All
+            </button>
+            {SERVICE_CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className={`booking-wizard__category-chip${categoryFilter === c.value ? ' booking-wizard__category-chip--active' : ''}`}
+                onClick={() => setCategoryFilter(c.value)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {visibleServices.length === 0 && <p className="booking-wizard__note">No services in this category yet.</p>}
           <ul className="booking-wizard__service-list">
-            {services.map((s) => (
+            {visibleServices.map((s) => (
               <li key={s._id}>
                 <label className="booking-wizard__service">
                   <input type="checkbox" checked={selectedServiceIds.includes(s._id)} onChange={() => toggleService(s._id)} />

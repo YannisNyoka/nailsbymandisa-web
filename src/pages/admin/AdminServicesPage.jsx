@@ -3,11 +3,10 @@ import { apiClient } from '../../lib/apiClient.js';
 import { uploadImageFile } from '../../lib/uploadImage.js';
 import { optimizedImageUrl } from '../../lib/cloudinaryUrl.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Table, useToast } from '../../design-system';
+import { SERVICE_CATEGORIES, categoryLabel } from '../../lib/serviceCategories.js';
 import './AdminPages.css';
 
-const CATEGORIES = ['manicure', 'pedicure', 'gel', 'acrylic', 'polygel', 'nail_art', 'soak_off', 'extensions'];
-
-const emptyForm = { name: '', category: 'gel', description: '', durationMinutes: 60, priceRand: '', imageUrl: null };
+const emptyForm = { name: '', category: SERVICE_CATEGORIES[0].value, description: '', durationMinutes: 60, priceRand: '', imageUrl: null };
 
 export function AdminServicesPage() {
   const { showToast } = useToast();
@@ -110,7 +109,7 @@ export function AdminServicesPage() {
         ),
     },
     { key: 'name', header: 'Name' },
-    { key: 'category', header: 'Category', render: (s) => s.category.replace('_', ' ') },
+    { key: 'category', header: 'Category', render: (s) => categoryLabel(s.category) },
     { key: 'duration', header: 'Duration', render: (s) => `${s.durationMinutes} min` },
     { key: 'price', header: 'Price', render: (s) => `R${(s.priceCents / 100).toFixed(2)}` },
     { key: 'status', header: 'Status', render: (s) => <Badge variant={s.isActive ? 'success' : 'neutral'}>{s.isActive ? 'active' : 'inactive'}</Badge> },
@@ -154,8 +153,8 @@ export function AdminServicesPage() {
           </FormField>
           <FormField label="Category" required>
             <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c.replace('_', ' ')}</option>
+              {SERVICE_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
           </FormField>
