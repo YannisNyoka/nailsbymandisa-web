@@ -261,7 +261,7 @@ export function AdminSchedulePage() {
               </thead>
               <tbody>
                 {SLOTS.map((slot, slotIdx) => (
-                  <tr key={slot}>
+                  <tr key={slot} className={slot.endsWith(':00') ? 'admin-schedule__row--hour' : ''}>
                     <td className="admin-schedule__time-label">{slot}</td>
                     {staff.map((s) => {
                       const spanEntry = dailySpansByStaff[s._id]?.get(slotIdx);
@@ -270,7 +270,10 @@ export function AdminSchedulePage() {
                         const { span, appt } = spanEntry;
                         return (
                           <td key={s._id} rowSpan={span} className="admin-schedule__cell admin-schedule__cell--booked">
-                            {appt.clientName || 'Guest'} — {serviceNames(appt)}
+                            <div className="admin-schedule__appt-card">
+                              <span className="admin-schedule__appt-name">{appt.clientName || 'Guest'}</span>
+                              <span className="admin-schedule__appt-services">{serviceNames(appt)}</span>
+                            </div>
                           </td>
                         );
                       }
@@ -315,7 +318,7 @@ export function AdminSchedulePage() {
                     if (spanEntry) {
                       const { span, appt } = spanEntry;
                       return (
-                        <td key={d} rowSpan={span} className="admin-schedule__cell admin-schedule__cell--open">
+                        <td key={d} rowSpan={span} className="admin-schedule__cell admin-schedule__cell--open admin-schedule__cell--has-appt">
                           <span className="admin-schedule__appt-chip">{appt.clientName || 'Guest'}</span>
                         </td>
                       );

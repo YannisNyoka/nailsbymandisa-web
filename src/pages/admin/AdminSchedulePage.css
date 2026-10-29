@@ -12,13 +12,15 @@
 }
 
 .admin-schedule__grid-wrapper {
-  overflow-x: auto;
+  overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  max-height: 72vh;
 }
 
 .admin-schedule__grid {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   font-size: var(--text-sm);
 }
@@ -34,16 +36,34 @@
   text-align: left;
   position: sticky;
   top: 0;
+  z-index: 2;
+  /* A touch of the brand accent under the header row — ties the grid back to the rest of
+     the admin panel instead of reading as a plain spreadsheet. */
+  border-bottom: 2px solid var(--color-accent);
 }
 .admin-schedule__time-label {
   font-weight: 600;
   color: var(--color-text-muted);
   background: var(--color-surface-muted);
+  /* Stays in view as the grid scrolls horizontally (the weekly view's 7 day columns, or
+     the daily view with several staff, both commonly overflow) — otherwise there's no way
+     to tell which time a cell belongs to once you've scrolled right. */
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+/* Marks the on-the-hour row in the daily grid (half-hour rows don't get it) — a slightly
+   heavier line every 60 minutes gives the eye a rhythm to scan by, the same way a paper
+   diary rules an hour line heavier than the half-hour tick. The weekly grid is already
+   hourly throughout, so every row there is naturally "on the hour". */
+.admin-schedule__row--hour td {
+  border-top: 2px solid var(--color-border);
 }
 
 .admin-schedule__cell {
-  min-width: 160px;
-  max-width: 220px;
+  min-width: 170px;
+  max-width: 230px;
   overflow: hidden;
   text-overflow: ellipsis;
   /* A rowSpan-ing cell (a merged appointment block) is often much taller than its own
@@ -57,16 +77,53 @@
 .admin-schedule__cell--open {
   background: var(--color-surface);
 }
+/* The weekly grid's spanning appointment cell is still --open underneath (same "this slot
+   is within working hours" background) — just needs tighter padding so the inner
+   .admin-schedule__appt-chip card supplies its own spacing instead of stacking two
+   paddings on top of each other. */
+.admin-schedule__cell--has-appt {
+  padding: var(--space-1);
+}
 .admin-schedule__cell--blocked {
-  background: var(--color-danger-bg);
+  background: repeating-linear-gradient(135deg, var(--color-danger-bg), var(--color-danger-bg) 6px, var(--color-surface) 6px, var(--color-surface) 12px);
   color: var(--color-danger);
   font-weight: 600;
   text-align: center;
 }
 .admin-schedule__cell--booked {
+  /* The cell itself stays a plain background — the "card" look lives on the inner
+     .admin-schedule__appt-card element below, so its rounded corners and shadow aren't
+     clipped by the table cell's own border/padding box. */
+  background: var(--color-surface);
+  padding: var(--space-1);
+  white-space: normal;
+}
+
+.admin-schedule__appt-card {
+  height: 100%;
+  min-height: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   background: var(--color-accent-muted);
+  border-left: 3px solid var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.admin-schedule__appt-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.admin-schedule__appt-name {
+  display: block;
+  font-weight: 700;
   color: var(--color-accent-hover);
-  font-weight: 600;
+}
+.admin-schedule__appt-services {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
   white-space: normal;
 }
 
@@ -108,14 +165,22 @@
 
 .admin-schedule__appt-chip {
   display: block;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-accent);
+  height: 100%;
+  min-height: 100%;
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-accent-muted);
   color: var(--color-accent-hover);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--text-xs);
   white-space: normal;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.admin-schedule__appt-chip:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .admin-schedule__week-range {
