@@ -172,6 +172,29 @@
   margin: var(--space-2) 0 0;
 }
 
+.admin-appointments__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: var(--space-2);
+}
+.admin-appointments__slot {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+.admin-appointments__slot:hover {
+  border-color: var(--color-accent);
+}
+.admin-appointments__slot--selected {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

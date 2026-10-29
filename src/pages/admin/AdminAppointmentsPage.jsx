@@ -301,9 +301,12 @@ function EditAppointmentModal({ appointment, staff, services, onClose, onDone })
   const [statusAction, setStatusAction] = useState('confirmed');
   const [paymentAction, setPaymentAction] = useState('unpaid');
   const [submitting, setSubmitting] = useState(false);
+  const [slots, setSlots] = useState(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const isPendingPayment = appointment.status === 'pending_payment';
   const isConfirmed = appointment.status === 'confirmed';
+  const isCancelling = statusAction === 'cancelled';
 
   const selectedServices = services.filter((s) => selectedServiceIds.includes(s._id));
   const totalDurationMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
@@ -312,6 +315,41 @@ function EditAppointmentModal({ appointment, staff, services, onClose, onDone })
   function toggleService(id) {
     setSelectedServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
   }
+
+  // Same live slot picker the public booking wizard uses, not a free-text time field — a
+  // conflicting time should never be something you can type in and only find out about on
+  // save. excludeAppointmentId leaves this appointment's own current slot out of the
+  // conflict check against itself. Cancelling skips this entirely (date/time are about to
+  // become irrelevant).
+  useEffect(() => {
+    if (isCancelling || selectedServiceIds.length === 0 || !date || !employeeId) {
+      setSlots(null);
+      return undefined;
+    }
+    let cancelled = false;
+    setLoadingSlots(true);
+    apiClient
+      .get(
+        `/appointments/slots?serviceIds=${selectedServiceIds.join(',')}&date=${date}&employeeId=${employeeId}&excludeAppointmentId=${appointment._id}`
+      )
+      .then(({ slots: available }) => {
+        if (cancelled) return;
+        setSlots(available);
+        if (!available.includes(startTime)) setStartTime('');
+      })
+      .catch(() => {
+        if (!cancelled) setSlots([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlots(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // startTime deliberately excluded — this effect only ever clears/sets it, re-running
+    // on its own change would be a feedback loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, employeeId, selectedServiceIds.join(','), isCancelling, appointment._id]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -324,7 +362,7 @@ function EditAppointmentModal({ appointment, staff, services, onClose, onDone })
       // Skip the date/time/services edit entirely when cancelling — nothing about those
       // matters once the booking is being cancelled, and re-quoting a "new" slot in the
       // same request would be pointless risk for zero benefit.
-      if (statusAction !== 'cancelled') {
+      if (!isCancelling) {
         await apiClient.post(`/appointments/${appointment._id}/reschedule`, {
           date,
           startTime,
@@ -361,7 +399,7 @@ function EditAppointmentModal({ appointment, staff, services, onClose, onDone })
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={submitting}>
+          <Button onClick={handleSubmit} loading={submitting} disabled={!isCancelling && !startTime}>
             Save changes
           </Button>
         </>
@@ -405,9 +443,29 @@ function EditAppointmentModal({ appointment, staff, services, onClose, onDone })
         <FormField label="Date" required>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </FormField>
-        <FormField label="Start time" required hint="24-hour format, e.g. 14:00">
-          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        </FormField>
+
+        {!isCancelling && (
+          <FormField label="Start time" required>
+            {loadingSlots && <p>Loading available times&hellip;</p>}
+            {!loadingSlots && slots && slots.length === 0 && (
+              <p className="admin-page__muted">No open times that day for this staff member/services.</p>
+            )}
+            {!loadingSlots && slots && slots.length > 0 && (
+              <div className="admin-appointments__slots">
+                {slots.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    className={`admin-appointments__slot${startTime === slot ? ' admin-appointments__slot--selected' : ''}`}
+                    onClick={() => setStartTime(slot)}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            )}
+          </FormField>
+        )}
 
         {isPendingPayment && (
           <FormField
