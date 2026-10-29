@@ -259,6 +259,7 @@ export function AdminAppointmentsPage() {
         <EditAppointmentModal
           appointment={editTarget}
           staff={staff}
+          services={services}
           onClose={() => setEditTarget(null)}
           onDone={async () => {
             setEditTarget(null);
@@ -270,24 +271,77 @@ export function AdminAppointmentsPage() {
   );
 }
 
-// Admin-only edit: date/time, staff reassignment and notes, all through the same
-// POST /:id/reschedule endpoint the customer-facing reschedule flow uses — an admin actor
-// additionally bypasses the ownership check and the cancellation-notice-window lockout
-// (bookingService.js's assertOwnerOrAdmin / rescheduleAppointment), and is the only actor
-// allowed to send employeeId/notes at all.
-function EditAppointmentModal({ appointment, staff, onClose, onDone }) {
+function formatCents(cents) {
+  return `R${(cents / 100).toFixed(2)}`;
+}
+
+// Admin-only full edit: staff, status, services (with a live recomputed total/duration —
+// changing services never touches depositCents, which is a flat setting, not derived
+// from the services chosen; see bookingService.quoteBooking), date/time, payment status
+// and notes. Goes through the same POST /:id/reschedule endpoint the customer-facing
+// reschedule flow uses for the date/time/staff/services/notes part — an admin actor
+// additionally bypasses the ownership check and the cancellation-notice-window lockout,
+// and is the only actor allowed to send employeeId/serviceIds/notes at all
+// (bookingService.js's assertOwnerOrAdmin / rescheduleAppointment). Status and payment
+// status go through the same dedicated endpoints the icon actions use
+// (/:id/complete, /:id/cancel) or the new cash-payment recording endpoint
+// (/payments/appointments/:id/record-cash) — not a generic "set any field" endpoint.
+//
+// Scope deliberately stops short of what this could grow into: there's no way here to
+// collect a remaining balance on an already-confirmed booking (only the initial
+// pending-payment -> paid transition is supported) — that's a real, separate feature
+// (its own payment record, not just a status label) left for later.
+function EditAppointmentModal({ appointment, staff, services, onClose, onDone }) {
   const { showToast } = useToast();
   const [date, setDate] = useState(appointment.date);
   const [startTime, setStartTime] = useState(appointment.startTime);
   const [employeeId, setEmployeeId] = useState(appointment.employeeId);
+  const [selectedServiceIds, setSelectedServiceIds] = useState(appointment.serviceIds.map(String));
   const [notes, setNotes] = useState(appointment.notes || '');
+  const [statusAction, setStatusAction] = useState('confirmed');
+  const [paymentAction, setPaymentAction] = useState('unpaid');
   const [submitting, setSubmitting] = useState(false);
+
+  const isPendingPayment = appointment.status === 'pending_payment';
+  const isConfirmed = appointment.status === 'confirmed';
+
+  const selectedServices = services.filter((s) => selectedServiceIds.includes(s._id));
+  const totalDurationMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+  const totalPriceCents = selectedServices.reduce((sum, s) => sum + s.priceCents, 0);
+
+  function toggleService(id) {
+    setSelectedServiceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (selectedServiceIds.length === 0) {
+      showToast('Choose at least one service.', { variant: 'error' });
+      return;
+    }
     setSubmitting(true);
     try {
-      await apiClient.post(`/appointments/${appointment._id}/reschedule`, { date, startTime, employeeId, notes });
+      // Skip the date/time/services edit entirely when cancelling — nothing about those
+      // matters once the booking is being cancelled, and re-quoting a "new" slot in the
+      // same request would be pointless risk for zero benefit.
+      if (statusAction !== 'cancelled') {
+        await apiClient.post(`/appointments/${appointment._id}/reschedule`, {
+          date,
+          startTime,
+          employeeId,
+          serviceIds: selectedServiceIds,
+          notes,
+        });
+      }
+      if (isPendingPayment && paymentAction !== 'unpaid') {
+        await apiClient.post(`/payments/appointments/${appointment._id}/record-cash`, { amount: paymentAction });
+      }
+      if (isConfirmed && statusAction === 'completed') {
+        await apiClient.post(`/appointments/${appointment._id}/complete`);
+      }
+      if (isConfirmed && statusAction === 'cancelled') {
+        await apiClient.post(`/appointments/${appointment._id}/cancel`, { reason: 'Cancelled by admin' });
+      }
       showToast('Appointment updated.', { variant: 'success' });
       await onDone();
     } catch (err) {
@@ -314,12 +368,6 @@ function EditAppointmentModal({ appointment, staff, onClose, onDone }) {
       }
     >
       <form onSubmit={handleSubmit} noValidate>
-        <FormField label="Date" required>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </FormField>
-        <FormField label="Start time" required hint="24-hour format, e.g. 14:00">
-          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        </FormField>
         <FormField label="Staff" required>
           <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
             {staff.map((s) => (
@@ -327,6 +375,54 @@ function EditAppointmentModal({ appointment, staff, onClose, onDone }) {
             ))}
           </select>
         </FormField>
+
+        {isConfirmed && (
+          <FormField label="Status">
+            <select value={statusAction} onChange={(e) => setStatusAction(e.target.value)}>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </FormField>
+        )}
+
+        <FormField label="Services" required>
+          <div className="admin-appointments__service-checklist">
+            {services.map((s) => (
+              <label key={s._id} className="admin-appointments__service-option">
+                <input type="checkbox" checked={selectedServiceIds.includes(s._id)} onChange={() => toggleService(s._id)} />
+                {s.name} ({formatCents(s.priceCents)} &middot; {s.durationMinutes}min)
+              </label>
+            ))}
+          </div>
+        </FormField>
+        {selectedServices.length > 0 && (
+          <p className="admin-appointments__totals">
+            Total: {formatCents(totalPriceCents)} &middot; Duration: {totalDurationMinutes} min
+          </p>
+        )}
+
+        <FormField label="Date" required>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </FormField>
+        <FormField label="Start time" required hint="24-hour format, e.g. 14:00">
+          <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        </FormField>
+
+        {isPendingPayment && (
+          <FormField
+            label="Payment status"
+            hint="Only for a cash/in-person payment — online payments confirm automatically."
+          >
+            <select value={paymentAction} onChange={(e) => setPaymentAction(e.target.value)}>
+              <option value="unpaid">Unpaid</option>
+              <option value="deposit">Deposit paid</option>
+              <option value="full">Fully paid</option>
+            </select>
+          </FormField>
+        )}
+        {isConfirmed && <p className="admin-page__muted">Payment: deposit already paid.</p>}
+
         <FormField label="Notes">
           <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </FormField>
