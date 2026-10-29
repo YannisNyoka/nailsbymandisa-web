@@ -56,6 +56,33 @@ function appointmentAt(slot, appointments, employeeId) {
   );
 }
 
+// Run-length-encodes a column's per-slot appointment lookup into spans, so one booking
+// renders as a single cell spanning every row it occupies (rowSpan) instead of repeating
+// its name/services in each row — matches how a calendar normally shows an appointment as
+// one block, not N identical-looking rows. Grid-alignment-agnostic: it just collapses
+// consecutive slots where lookupFn returns the *same* appointment, whatever the slot
+// granularity (30-min for the daily grid, hourly for the per-staff weekly one) — the
+// result map's values are either {span, appt} (render this cell, spanning `span` rows) or
+// 'skip' (a previous row's rowSpan already covers this grid position — render nothing
+// here at all, not even an empty cell, or the table layout would double up).
+function buildApptSpans(slots, lookupFn) {
+  const map = new Map();
+  let i = 0;
+  while (i < slots.length) {
+    const appt = lookupFn(i);
+    if (!appt) {
+      i += 1;
+      continue;
+    }
+    let span = 1;
+    while (i + span < slots.length && lookupFn(i + span)?._id === appt._id) span += 1;
+    map.set(i, { span, appt });
+    for (let k = 1; k < span; k += 1) map.set(i + k, 'skip');
+    i += span;
+  }
+  return map;
+}
+
 export function AdminSchedulePage() {
   const { user } = useAuth();
   const isStaff = user?.role === 'staff';
@@ -128,6 +155,40 @@ export function AdminSchedulePage() {
   const weekRangeLabel = `${WEEKDAY_SHORT_FORMATTER.format(new Date(`${weekDays[0]}T00:00:00`))}, ${DAY_MONTH_FORMATTER.format(new Date(`${weekDays[0]}T00:00:00`))} – ${WEEKDAY_SHORT_FORMATTER.format(new Date(`${weekDays[6]}T00:00:00`))}, ${DAY_MONTH_FORMATTER.format(new Date(`${weekDays[6]}T00:00:00`))}`;
   const isCurrentWeek = date === toDateString(new Date());
 
+  // One span map per column, so each appointment renders as a single rowSpan-ing cell
+  // instead of repeating in every slot it occupies — see buildApptSpans.
+  const dailySpansByStaff = Object.fromEntries(
+    staff.map((s) => {
+      const weekday = weekdayKeyFor(date);
+      return [
+        s._id,
+        buildApptSpans(SLOTS, (i) => {
+          const slot = SLOTS[i];
+          const open = isWithinShift(slot, s.workingHours?.[weekday]);
+          const blocked = open && isWithinBlock(slot, blocks, s._id);
+          return open && !blocked ? appointmentAt(slot, appointments, s._id) : null;
+        }),
+      ];
+    })
+  );
+
+  const weeklySpansByDay = selectedStaff
+    ? Object.fromEntries(
+        weekDays.map((d) => {
+          const weekday = weekdayKeyFor(d);
+          return [
+            d,
+            buildApptSpans(HOUR_SLOTS, (i) => {
+              const slot = HOUR_SLOTS[i];
+              const open = isWithinShift(slot, selectedStaff.workingHours?.[weekday]);
+              const blocked = open && isWithinBlock(slot, weekBlocks.filter((b) => b.date === d), selectedStaff._id);
+              return open && !blocked ? appointmentAt(slot, weekAppointments[d] || [], selectedStaff._id) : null;
+            }),
+          ];
+        })
+      )
+    : {};
+
   return (
     <div>
       <div className="admin-page__header-row">
@@ -199,20 +260,27 @@ export function AdminSchedulePage() {
                 </tr>
               </thead>
               <tbody>
-                {SLOTS.map((slot) => (
+                {SLOTS.map((slot, slotIdx) => (
                   <tr key={slot}>
                     <td className="admin-schedule__time-label">{slot}</td>
                     {staff.map((s) => {
+                      const spanEntry = dailySpansByStaff[s._id]?.get(slotIdx);
+                      if (spanEntry === 'skip') return null; // a previous row's rowSpan already covers this cell
+                      if (spanEntry) {
+                        const { span, appt } = spanEntry;
+                        return (
+                          <td key={s._id} rowSpan={span} className="admin-schedule__cell admin-schedule__cell--booked">
+                            {appt.clientName || 'Guest'} — {serviceNames(appt)}
+                          </td>
+                        );
+                      }
                       const weekday = weekdayKeyFor(date);
                       const open = isWithinShift(slot, s.workingHours?.[weekday]);
                       const blocked = open && isWithinBlock(slot, blocks, s._id);
-                      const appt = open && !blocked && appointmentAt(slot, appointments, s._id);
                       let cellClass = 'admin-schedule__cell--closed';
-                      let content = '';
-                      if (open && !blocked && !appt) cellClass = 'admin-schedule__cell--open';
-                      if (blocked) { cellClass = 'admin-schedule__cell--blocked'; content = 'Blocked'; }
-                      if (appt) { cellClass = 'admin-schedule__cell--booked'; content = `${appt.clientName || 'Guest'} — ${serviceNames(appt)}`; }
-                      return <td key={s._id} className={`admin-schedule__cell ${cellClass}`}>{content}</td>;
+                      if (open && !blocked) cellClass = 'admin-schedule__cell--open';
+                      if (blocked) cellClass = 'admin-schedule__cell--blocked';
+                      return <td key={s._id} className={`admin-schedule__cell ${cellClass}`}>{blocked ? 'Blocked' : ''}</td>;
                     })}
                   </tr>
                 ))}
@@ -238,21 +306,29 @@ export function AdminSchedulePage() {
               </tr>
             </thead>
             <tbody>
-              {HOUR_SLOTS.map((slot) => (
+              {HOUR_SLOTS.map((slot, slotIdx) => (
                 <tr key={slot}>
                   <td className="admin-schedule__time-label">{slot}</td>
                   {weekDays.map((d) => {
+                    const spanEntry = weeklySpansByDay[d]?.get(slotIdx);
+                    if (spanEntry === 'skip') return null; // a previous row's rowSpan already covers this cell
+                    if (spanEntry) {
+                      const { span, appt } = spanEntry;
+                      return (
+                        <td key={d} rowSpan={span} className="admin-schedule__cell admin-schedule__cell--open">
+                          <span className="admin-schedule__appt-chip">{appt.clientName || 'Guest'}</span>
+                        </td>
+                      );
+                    }
                     const weekday = weekdayKeyFor(d);
                     const open = isWithinShift(slot, selectedStaff.workingHours?.[weekday]);
                     const blocked = open && isWithinBlock(slot, weekBlocks.filter((b) => b.date === d), selectedStaff._id);
-                    const appt = open && !blocked && appointmentAt(slot, weekAppointments[d] || [], selectedStaff._id);
                     let cellClass = 'admin-schedule__cell--closed';
                     if (open) cellClass = 'admin-schedule__cell--open';
                     if (blocked) cellClass = 'admin-schedule__cell--blocked';
                     return (
                       <td key={d} className={`admin-schedule__cell ${cellClass}`}>
                         {blocked && 'Blocked'}
-                        {appt && <span className="admin-schedule__appt-chip">{appt.clientName || 'Guest'}</span>}
                       </td>
                     );
                   })}

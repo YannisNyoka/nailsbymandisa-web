@@ -46,6 +46,10 @@
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* A rowSpan-ing cell (a merged appointment block) is often much taller than its own
+     content — anchor to the top like a normal calendar block, instead of the browser's
+     default vertical-centering floating it in the middle of a long box. */
+  vertical-align: top;
 }
 .admin-schedule__cell--closed {
   background: repeating-linear-gradient(45deg, var(--color-surface-muted), var(--color-surface-muted) 6px, var(--color-surface) 6px, var(--color-surface) 12px);
