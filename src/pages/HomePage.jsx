@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient.js';
 import { useDocumentMeta } from '../lib/useDocumentMeta.js';
 import { formatHour } from '../lib/formatTime.js';
 import { buildWhatsAppLink } from '../lib/whatsapp.js';
 import { optimizedImageUrl, optimizedVideoUrl } from '../lib/cloudinaryUrl.js';
+import { SERVICE_CATEGORIES } from '../lib/serviceCategories.js';
 import { Modal } from '../design-system';
 import './HomePage.css';
 
@@ -122,6 +123,7 @@ export function HomePage() {
   const [workItems, setWorkItems] = useState(null);
   const [lightboxItem, setLightboxItem] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   useDocumentMeta(null, 'Book manicures, pedicures, gel, acrylic, polygel and nail art online with NailsByMandisa.', { path: '/' });
 
   useEffect(() => {
@@ -146,6 +148,10 @@ export function HomePage() {
   }, []);
 
   const hoursSummary = settings ? summarizeHours(settings.hours) : null;
+  const visibleServices = useMemo(
+    () => (services || []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter),
+    [services, categoryFilter]
+  );
 
   return (
     <main className="home">
@@ -205,8 +211,28 @@ export function HomePage() {
       {services && services.length > 0 && (
         <section className="home__services">
           <h2>Our services</h2>
+          <div className="home__category-filter" role="group" aria-label="Filter services by category">
+            <button
+              type="button"
+              className={`home__category-chip${categoryFilter === 'all' ? ' home__category-chip--active' : ''}`}
+              onClick={() => setCategoryFilter('all')}
+            >
+              All
+            </button>
+            {SERVICE_CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className={`home__category-chip${categoryFilter === c.value ? ' home__category-chip--active' : ''}`}
+                onClick={() => setCategoryFilter(c.value)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {visibleServices.length === 0 && <p className="home__services-empty">No services in this category yet.</p>}
           <ul className="home__service-list">
-            {services.map((s) => (
+            {visibleServices.map((s) => (
               <li key={s._id}>
                 <Link to={`/book?service=${s._id}`} className="home__service">
                   {s.imageUrl ? (

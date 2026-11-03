@@ -16,6 +16,7 @@ const TYPE_ICON = {
   payment_failed: { glyph: '✕', variant: 'danger' },
   admin_message: { glyph: '💬', variant: 'accent' },
   broadcast: { glyph: '📢', variant: 'accent' },
+  new_booking: { glyph: '📅', variant: 'accent' },
 };
 
 // Only ever rendered inside Layout.jsx's `isAuthenticated` branch — a signed-out visitor
