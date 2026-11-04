@@ -176,6 +176,7 @@
 .admin-top-bar__right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 .admin-top-bar__unpaid-badge {

@@ -77,7 +77,7 @@ export function UnpaidAppointmentsBanner({ onChange }) {
     <div className="unpaid-banner">
       <div className="unpaid-banner__header">
         <span className="unpaid-banner__icon" aria-hidden="true">⚠️</span>
-        <div>
+        <div className="unpaid-banner__text">
           <h2 className="unpaid-banner__title">Unpaid Appointments — Admin Review Required</h2>
           <p className="unpaid-banner__subtitle">These bookings were started but payment was never completed.</p>
         </div>
