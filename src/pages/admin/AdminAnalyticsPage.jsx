@@ -9,12 +9,22 @@ function formatCents(cents) {
   return `R${(cents / 100).toFixed(0)}`;
 }
 
+// 'week'/'month' are calendar-aligned (this Monday through today / the 1st of this
+// month through today), matching the Overview page's Revenue (week)/(month) cards — not
+// a rolling 7/30-day lookback. 90 days/1 year have no calendar-aligned equivalent being
+// asked for here, so they stay rolling windows.
 const RANGE_OPTIONS = [
-  { label: '7 days', days: 7 },
-  { label: '30 days', days: 30 },
-  { label: '90 days', days: 90 },
-  { label: '1 year', days: 365 },
+  { label: 'This week', range: 'week' },
+  { label: 'This month', range: 'month' },
+  { label: '90 days', range: 90 },
+  { label: '1 year', range: 365 },
 ];
+
+function rangeLabel(range) {
+  if (range === 'week') return 'this week';
+  if (range === 'month') return 'this month';
+  return `in the last ${range} days`;
+}
 
 const BOOKINGS_SERIES = [
   { key: 'booked', label: 'Booked', color: 'var(--color-accent)' },
@@ -39,7 +49,7 @@ export function AdminAnalyticsPage() {
   const { user } = useAuth();
   const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
-  const [days, setDays] = useState(30);
+  const [range, setRange] = useState('month');
   const [summary, setSummary] = useState(null);
   const [revenueTrend, setRevenueTrend] = useState(null);
   const [bookingsTrend, setBookingsTrend] = useState(null);
@@ -50,11 +60,11 @@ export function AdminAnalyticsPage() {
 
   useEffect(() => {
     apiClient
-      .get(`/admin/analytics/summary?days=${days}`)
+      .get(`/admin/analytics/summary?range=${range}`)
       .then(setSummary)
       .catch((err) => showToast(err.message || 'Could not load the analytics summary.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick]);
+  }, [range, refreshTick]);
 
   // Revenue is salon financial data, not staff-facing operational info — skipped
   // entirely for a staff-scoped viewer, matching the overview page and the API's own
@@ -62,38 +72,38 @@ export function AdminAnalyticsPage() {
   useEffect(() => {
     if (isStaff) return;
     apiClient
-      .get(`/admin/trends?metric=revenue&days=${days}`)
+      .get(`/admin/trends?metric=revenue&range=${range}`)
       .then(setRevenueTrend)
       .catch((err) => showToast(err.message || 'Could not load the revenue trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick, isStaff]);
+  }, [range, refreshTick, isStaff]);
 
   useEffect(() => {
     apiClient
-      .get(`/admin/trends?metric=bookings&days=${days}`)
+      .get(`/admin/trends?metric=bookings&range=${range}`)
       .then(setBookingsTrend)
       .catch((err) => showToast(err.message || 'Could not load the bookings trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick]);
+  }, [range, refreshTick]);
 
   useEffect(() => {
     apiClient
-      .get(`/admin/analytics/top-services?days=${days}`)
+      .get(`/admin/analytics/top-services?range=${range}`)
       .then(setTopServices)
       .catch((err) => showToast(err.message || 'Could not load top services.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick]);
+  }, [range, refreshTick]);
 
   // Cross-staff/cross-client visibility — deliberately skipped for a staff-scoped viewer,
   // matching the API's own admin-only gate on these two (§ staff-scoped admin access).
   useEffect(() => {
     if (isStaff) return;
     apiClient
-      .get(`/admin/analytics/staff-bookings?days=${days}`)
+      .get(`/admin/analytics/staff-bookings?range=${range}`)
       .then(setStaffBookings)
       .catch((err) => showToast(err.message || 'Could not load staff bookings.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, refreshTick, isStaff]);
+  }, [range, refreshTick, isStaff]);
 
   useEffect(() => {
     if (isStaff) return;
@@ -134,7 +144,7 @@ export function AdminAnalyticsPage() {
         <h2>📊 Business Analytics</h2>
         <div className="analytics-page__controls">
           {RANGE_OPTIONS.map((opt) => (
-            <Button key={opt.days} size="sm" variant={days === opt.days ? 'primary' : 'secondary'} onClick={() => setDays(opt.days)}>
+            <Button key={opt.range} size="sm" variant={range === opt.range ? 'primary' : 'secondary'} onClick={() => setRange(opt.range)}>
               {opt.label}
             </Button>
           ))}
@@ -149,7 +159,7 @@ export function AdminAnalyticsPage() {
             iconVariant="success"
             label="Combined revenue"
             value={formatCents(summary.combinedRevenueCents)}
-            sublabel={`Last ${days} days`}
+            sublabel={rangeLabel(range).replace(/^./, (c) => c.toUpperCase())}
           />
         )}
         <AnalyticsStatCard
@@ -212,7 +222,7 @@ export function AdminAnalyticsPage() {
           {topServices && (
             <RankedBarList
               items={topServices.items.map((i) => ({ label: i.name, value: i.count }))}
-              emptyLabel={`No bookings in the last ${days} days yet.`}
+              emptyLabel={`No bookings ${rangeLabel(range)} yet.`}
             />
           )}
         </div>
@@ -222,7 +232,7 @@ export function AdminAnalyticsPage() {
             {staffBookings && (
               <RankedBarList
                 items={staffBookings.items.map((i) => ({ label: i.name, value: i.count }))}
-                emptyLabel={`No bookings in the last ${days} days yet.`}
+                emptyLabel={`No bookings ${rangeLabel(range)} yet.`}
               />
             )}
           </div>

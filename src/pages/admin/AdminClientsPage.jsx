@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Table, Pagination, useToast } from '../../design-system';
 import './AdminPages.css';
 
 export function AdminClientsPage() {
   const { showToast } = useToast();
+  const { setPageCount } = useOutletContext();
   const [data, setData] = useState(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -26,6 +27,12 @@ export function AdminClientsPage() {
     load().catch((err) => showToast(err.message || 'Could not load clients.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
+
+  // data.total already reflects the active search filter — see the equivalent comment
+  // in AdminAppointmentsPage.jsx.
+  useEffect(() => {
+    setPageCount(data ? data.total : null);
+  }, [data, setPageCount]);
 
   async function handleSendNotify(e) {
     e.preventDefault();

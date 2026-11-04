@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { apiClient } from '../../lib/apiClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Badge, Button, ConfirmDialog, FormField, Modal, Pagination, Table, useToast } from '../../design-system';
+import { UnpaidAppointmentsBanner } from './UnpaidAppointmentsBanner.jsx';
 import './AdminPages.css';
 
 const STATUS_VARIANT = {
@@ -23,6 +25,8 @@ export function AdminAppointmentsPage() {
   const { user } = useAuth();
   const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
+  const { setPageCount } = useOutletContext();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [services, setServices] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -30,13 +34,22 @@ export function AdminAppointmentsPage() {
   const [staffById, setStaffById] = useState({});
   const [page, setPage] = useState(1);
   const [dateFilter, setDateFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  // Pre-filled from ?status=... (e.g. the Overview page's "Unpaid bookings" stat card
+  // links here with ?status=pending_payment) — read once on mount, same as every other
+  // filter here is plain local state rather than synced back to the URL on every change.
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
   const [staffFilter, setStaffFilter] = useState('');
   const [serviceFilter, setServiceFilter] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [cancelTarget, setCancelTarget] = useState(null);
   const [completeTarget, setCompleteTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
+  // Bumped (not on every load() — only when an action here could plausibly change which
+  // appointments are unpaid) to remount UnpaidAppointmentsBanner below, which otherwise
+  // only fetches once on mount and has no other way to know this table's own actions
+  // moved an appointment in or out of pending_payment.
+  const [bannerKey, setBannerKey] = useState(0);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
@@ -53,6 +66,13 @@ export function AdminAppointmentsPage() {
     load().catch((err) => showToast(err.message || 'Could not load appointments.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
+
+  // data.total already reflects every active filter (the API computes it after applying
+  // date/status/staff/service/clientSearch, not just the current page) — so the top bar
+  // count tracks the filtered count for free, no separate "count-only" request needed.
+  useEffect(() => {
+    setPageCount(data ? data.total : null);
+  }, [data, setPageCount]);
 
   useEffect(() => {
     Promise.all([apiClient.get('/services'), apiClient.get('/staff')])
@@ -71,6 +91,7 @@ export function AdminAppointmentsPage() {
       await apiClient.post(`/appointments/${cancelTarget._id}/cancel`, { reason: 'Cancelled by admin' });
       showToast('Appointment cancelled.', { variant: 'success' });
       await load();
+      setBannerKey((k) => k + 1);
     } catch (err) {
       showToast(err.message || 'Could not cancel this appointment.', { variant: 'error' });
       throw err;
@@ -84,6 +105,18 @@ export function AdminAppointmentsPage() {
       await load();
     } catch (err) {
       showToast(err.message || 'Could not mark this appointment completed.', { variant: 'error' });
+      throw err;
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      await apiClient.delete(`/appointments/${deleteTarget._id}`);
+      showToast('Unpaid appointment deleted.', { variant: 'success' });
+      await load();
+      setBannerKey((k) => k + 1);
+    } catch (err) {
+      showToast(err.message || 'Could not delete this appointment.', { variant: 'error' });
       throw err;
     }
   }
@@ -183,6 +216,17 @@ export function AdminAppointmentsPage() {
             >
               ✕
             </Button>
+            {a.status === 'pending_payment' && (
+              <Button
+                variant="danger"
+                size="sm"
+                title="Delete unpaid appointment"
+                aria-label="Delete unpaid appointment"
+                onClick={() => setDeleteTarget(a)}
+              >
+                🗑
+              </Button>
+            )}
           </div>
         ),
     },
@@ -192,6 +236,14 @@ export function AdminAppointmentsPage() {
 
   return (
     <div>
+      {!isStaff && (
+        <UnpaidAppointmentsBanner
+          key={bannerKey}
+          onChange={() => {
+            load().catch(() => {});
+          }}
+        />
+      )}
       <div className="admin-page__header-row">
         <Button variant="secondary" size="sm" onClick={exportCsv}>⬇ CSV</Button>
         <Button variant="secondary" size="sm" onClick={exportPdf}>⬇ PDF</Button>
@@ -255,6 +307,16 @@ export function AdminAppointmentsPage() {
         confirmLabel="Mark completed"
       />
 
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete this unpaid appointment?"
+        summary={deleteTarget ? `Permanently deletes the ${deleteTarget.date} ${deleteTarget.startTime} booking — it was never paid for, so unlike Cancel, this removes it entirely rather than keeping a record. The client is notified. This can't be undone.` : ''}
+        confirmLabel="Delete permanently"
+        danger
+      />
+
       {editTarget && (
         <EditAppointmentModal
           appointment={editTarget}
@@ -264,6 +326,7 @@ export function AdminAppointmentsPage() {
           onDone={async () => {
             setEditTarget(null);
             await load();
+            setBannerKey((k) => k + 1);
           }}
         />
       )}

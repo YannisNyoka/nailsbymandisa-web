@@ -3,16 +3,21 @@ import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Button, SimpleLineChart, SimpleBarChart, useToast } from '../../design-system';
+import { UnpaidAppointmentsBanner } from './UnpaidAppointmentsBanner.jsx';
 import './AdminPages.css';
 
 function formatCents(cents) {
   return `R${(cents / 100).toFixed(2)}`;
 }
 
+// 'week'/'month' are calendar-aligned (this Monday through today / the 1st of this
+// month through today), matching the Revenue (week)/(month) stat cards above — not a
+// rolling 7/30-day lookback. 'Year' has no calendar-aligned equivalent being asked for
+// here, so it stays a rolling 365-day window.
 const RANGE_OPTIONS = [
-  { label: 'Week', days: 7 },
-  { label: 'Month', days: 30 },
-  { label: 'Year', days: 365 },
+  { label: 'Week', range: 'week' },
+  { label: 'Month', range: 'month' },
+  { label: 'Year', range: 365 },
 ];
 
 const BOOKINGS_SERIES = [
@@ -21,15 +26,23 @@ const BOOKINGS_SERIES = [
   { key: 'completed', label: 'Completed', color: 'var(--color-success)' },
 ];
 
-function StatCard({ icon, label, value, variant }) {
-  return (
-    <div className={`stat-card${variant ? ` stat-card--${variant}` : ''}`}>
+function StatCard({ icon, label, value, variant, to }) {
+  const content = (
+    <>
       <span className="stat-card__icon" aria-hidden="true">{icon}</span>
       <div>
         <div className="stat-card__label">{label}</div>
         <div className="stat-card__value">{value}</div>
       </div>
-    </div>
+    </>
+  );
+  const className = `stat-card${variant ? ` stat-card--${variant}` : ''}${to ? ' stat-card--link' : ''}`;
+  return to ? (
+    <Link to={to} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 
@@ -38,15 +51,19 @@ export function AdminOverviewPage() {
   const isStaff = user?.role === 'staff';
   const { showToast } = useToast();
   const [stats, setStats] = useState(null);
-  const [revenueDays, setRevenueDays] = useState(7);
+  const [revenueRange, setRevenueRange] = useState('week');
   const [revenueTrend, setRevenueTrend] = useState(null);
   const [bookingsTrend, setBookingsTrend] = useState(null);
 
-  useEffect(() => {
-    apiClient
+  function loadStats() {
+    return apiClient
       .get('/admin/overview')
       .then(setStats)
       .catch((err) => showToast(err.message || 'Could not load overview.', { variant: 'error' }));
+  }
+
+  useEffect(() => {
+    loadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,15 +72,15 @@ export function AdminOverviewPage() {
   useEffect(() => {
     if (isStaff) return;
     apiClient
-      .get(`/admin/trends?metric=revenue&days=${revenueDays}`)
+      .get(`/admin/trends?metric=revenue&range=${revenueRange}`)
       .then(setRevenueTrend)
       .catch((err) => showToast(err.message || 'Could not load the revenue trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revenueDays, isStaff]);
+  }, [revenueRange, isStaff]);
 
   useEffect(() => {
     apiClient
-      .get('/admin/trends?metric=bookings&days=30')
+      .get('/admin/trends?metric=bookings&range=30')
       .then(setBookingsTrend)
       .catch((err) => showToast(err.message || 'Could not load the bookings trend.', { variant: 'error' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,8 +102,10 @@ export function AdminOverviewPage() {
         {!isStaff && <StatCard icon="📊" label="Revenue (month)" value={formatCents(stats.revenueMonthCents)} variant="ink" />}
         <StatCard icon="✕" label="Cancellations" value={stats.cancellationsCount} variant="danger" />
         <StatCard icon="🚫" label="No-shows" value={stats.noShowsCount} variant="warning" />
-        <StatCard icon="💳" label="Unpaid bookings" value={stats.unpaidBookings} />
+        <StatCard icon="💳" label="Unpaid bookings" value={stats.unpaidBookings} to="/admin/appointments?status=pending_payment" />
       </div>
+
+      {!isStaff && <UnpaidAppointmentsBanner onChange={loadStats} />}
 
       {/* Revenue — including the trend chart below — is salon financial data, not
           staff-facing operational info, so it's hidden entirely for a staff account
@@ -99,10 +118,10 @@ export function AdminOverviewPage() {
             <div className="admin-chart-card__range">
               {RANGE_OPTIONS.map((opt) => (
                 <Button
-                  key={opt.days}
+                  key={opt.range}
                   size="sm"
-                  variant={revenueDays === opt.days ? 'primary' : 'secondary'}
-                  onClick={() => setRevenueDays(opt.days)}
+                  variant={revenueRange === opt.range ? 'primary' : 'secondary'}
+                  onClick={() => setRevenueRange(opt.range)}
                 >
                   {opt.label}
                 </Button>
