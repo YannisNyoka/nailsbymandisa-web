@@ -90,6 +90,13 @@ export function App() {
           <Route path="/gallery/submit" element={<SubmitPhotoPage />} />
         </Route>
 
+        {/* Nested inside the public Layout (not a sibling route tree) — on mobile the
+            admin dashboard deliberately keeps the public header/footer around it
+            (quick access to Book now/Gallery/notifications/account without leaving the
+            admin nav's own collapsed toggle), and only switches to its own full-bleed,
+            no-public-header shell above the tablet breakpoint. See Layout.jsx's
+            isAdminRoute / Layout.css's `.layout--admin` media query, and
+            AdminLayout.css's matching min-width override. */}
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminOverviewPage />} />

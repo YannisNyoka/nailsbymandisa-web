@@ -7,4 +7,5 @@ export { Badge } from './components/Badge.jsx';
 export { Table, Pagination } from './components/Table.jsx';
 export { SimpleLineChart } from './components/SimpleLineChart.jsx';
 export { SimpleBarChart } from './components/SimpleBarChart.jsx';
+export { PeriodBarChart } from './components/PeriodBarChart.jsx';
 export { RankedBarList } from './components/RankedBarList.jsx';

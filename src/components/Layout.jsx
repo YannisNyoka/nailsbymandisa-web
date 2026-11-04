@@ -19,10 +19,12 @@ export function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
-  // Neither makes sense inside the admin dashboard — WhatsApp is a customer contact
-  // channel, and the install prompt is for the public/account side of the site. Both are
-  // also fixed-position, so on /admin they'd otherwise float over the sidebar's own
-  // "Back to site"/"Log out" controls.
+  // Drives the `.layout--admin` CSS hook (Layout.css) that hides this public
+  // header/footer above the tablet breakpoint only — on mobile the admin dashboard
+  // deliberately keeps them for quick access to Book now/Gallery/notifications/account
+  // alongside the admin nav's own collapsed toggle (AdminLayout.jsx). WhatsApp/the
+  // install prompt stay hidden on every admin page regardless of width: a customer
+  // contact channel and a public-site install nudge, neither of which belongs here.
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   // Close the mobile nav panel automatically whenever the route changes, so tapping a
@@ -32,7 +34,7 @@ export function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="layout">
+    <div className={`layout${isAdminRoute ? ' layout--admin' : ''}`}>
       <header className="layout__header">
         <Link to="/" className="layout__brand">
           <img src="/brand/logo-lockup.png" alt="NailsByMandisa — Clean. Chic. Creative." className="layout__brand-logo" />

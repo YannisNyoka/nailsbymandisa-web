@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Button, SimpleLineChart, SimpleBarChart, RankedBarList, Table, useToast } from '../../design-system';
+import { Button, SimpleLineChart, SimpleBarChart, PeriodBarChart, RankedBarList, Table, useToast } from '../../design-system';
 import './AdminAnalyticsPage.css';
 
 function formatCents(cents) {
@@ -32,6 +32,48 @@ const BOOKINGS_SERIES = [
   { key: 'completed', label: 'Completed', color: 'var(--color-success)' },
 ];
 
+// Business Growth panel (period-over-period comparison + 8-period trend, api's
+// adminService.getBusinessGrowth) — a different concept from RANGE_OPTIONS above (which
+// drives the rest of this page): that's a single adjustable lookback window, this is
+// always "this [unit] so far vs. the same elapsed stretch of the previous one," with its
+// own fixed Weekly/Monthly/Yearly toggle.
+const GROWTH_UNITS = [
+  { unit: 'week', toggleLabel: 'Weekly', noun: 'week', periodDescription: 'This week (Mon–today)' },
+  { unit: 'month', toggleLabel: 'Monthly', noun: 'month', periodDescription: 'This month (1st–today)' },
+  { unit: 'year', toggleLabel: 'Yearly', noun: 'year', periodDescription: 'This year (Jan 1–today)' },
+];
+
+function formatPeriodLabel(unit, dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (unit === 'week') return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  if (unit === 'month') return date.toLocaleDateString('en-ZA', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return String(y);
+}
+
+function GrowthStatCard({ icon, label, metric, formatValue, noun }) {
+  const { current, sameStretchLastPeriod, fullLastPeriod, growthPct } = metric;
+  return (
+    <div className="growth-stat-card">
+      <div className="growth-stat-card__top">
+        <span className="growth-stat-card__label">{label}</span>
+        <span className="growth-stat-card__icon" aria-hidden="true">{icon}</span>
+      </div>
+      <div className="growth-stat-card__value">{formatValue(current)}</div>
+      {growthPct === null ? (
+        <p className="growth-stat-card__no-data">No last {noun} data</p>
+      ) : (
+        <p className={`growth-stat-card__growth growth-stat-card__growth--${growthPct >= 0 ? 'up' : 'down'}`}>
+          {growthPct >= 0 ? '▲' : '▼'} {Math.abs(growthPct)}%
+        </p>
+      )}
+      <p className="growth-stat-card__caption">
+        {formatValue(sameStretchLastPeriod)} same point last {noun} &middot; {formatValue(fullLastPeriod)} full {noun}
+      </p>
+    </div>
+  );
+}
+
 function AnalyticsStatCard({ icon, iconVariant, label, value, sublabel }) {
   return (
     <div className="analytics-stat-card">
@@ -56,7 +98,21 @@ export function AdminAnalyticsPage() {
   const [topServices, setTopServices] = useState(null);
   const [staffBookings, setStaffBookings] = useState(null);
   const [topClients, setTopClients] = useState(null);
+  const [growthUnit, setGrowthUnit] = useState('week');
+  const [growth, setGrowth] = useState(null);
   const [refreshTick, setRefreshTick] = useState(0);
+
+  // Admin-only, same boundary as combined revenue above — withheld server-side too
+  // (requirePermission, not requirePermissionOrStaffSelf), this just avoids firing a
+  // request a staff account would get a 403 from.
+  useEffect(() => {
+    if (isStaff) return;
+    apiClient
+      .get(`/admin/analytics/growth?unit=${growthUnit}`)
+      .then(setGrowth)
+      .catch((err) => showToast(err.message || 'Could not load business growth.', { variant: 'error' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [growthUnit, refreshTick, isStaff]);
 
   useEffect(() => {
     apiClient
@@ -197,6 +253,72 @@ export function AdminAnalyticsPage() {
           />
         )}
       </div>
+
+      {!isStaff && growth && (
+        <div className="analytics-card">
+          <div className="analytics-card__header">
+            <h3>📈 Business Growth</h3>
+            <div className="analytics-page__controls">
+              {GROWTH_UNITS.map((opt) => (
+                <Button
+                  key={opt.unit}
+                  size="sm"
+                  variant={growthUnit === opt.unit ? 'primary' : 'secondary'}
+                  onClick={() => setGrowthUnit(opt.unit)}
+                >
+                  {opt.toggleLabel}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const meta = GROWTH_UNITS.find((o) => o.unit === growthUnit);
+            return (
+              <>
+                <p className="growth-panel__description">
+                  {meta.periodDescription} compared with the same stretch of last {meta.noun}. Growth is shown against
+                  that like-for-like period.
+                </p>
+                <div className="growth-stat-grid">
+                  <GrowthStatCard icon="💰" label="Revenue" metric={growth.revenue} formatValue={formatCents} noun={meta.noun} />
+                  <GrowthStatCard icon="📅" label="Bookings" metric={growth.bookings} formatValue={String} noun={meta.noun} />
+                  <GrowthStatCard
+                    icon="👥"
+                    label="New Customers"
+                    metric={growth.newCustomers}
+                    formatValue={String}
+                    noun={meta.noun}
+                  />
+                </div>
+                <div className="growth-trend-grid">
+                  <div>
+                    <h4>Revenue &middot; last 8 {meta.noun}s</h4>
+                    <PeriodBarChart
+                      points={growth.trend.revenue}
+                      formatValue={formatCents}
+                      formatLabel={(p) => formatPeriodLabel(growthUnit, p.periodStart)}
+                    />
+                  </div>
+                  <div>
+                    <h4>Bookings &middot; last 8 {meta.noun}s</h4>
+                    <PeriodBarChart
+                      points={growth.trend.bookings}
+                      formatLabel={(p) => formatPeriodLabel(growthUnit, p.periodStart)}
+                    />
+                  </div>
+                  <div>
+                    <h4>New Customers &middot; last 8 {meta.noun}s</h4>
+                    <PeriodBarChart
+                      points={growth.trend.newCustomers}
+                      formatLabel={(p) => formatPeriodLabel(growthUnit, p.periodStart)}
+                    />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       <div className="analytics-card analytics-card--grid-2">
         <div>

@@ -32,3 +32,16 @@
   font-size: 11px;
   font-family: var(--font-body);
 }
+.ds-barchart__value-label {
+  fill: var(--color-text);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.ds-periodbar {
+  fill: var(--color-accent-muted);
+}
+.ds-periodbar--current {
+  fill: var(--color-accent);
+}

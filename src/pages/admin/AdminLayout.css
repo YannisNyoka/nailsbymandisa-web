@@ -1,31 +1,27 @@
-/* The site-wide Layout caps .layout__main at 960px for reading comfort on public pages —
-   too narrow for a sidebar + table dashboard. Only widen it when the admin shell is
-   actually inside it, so nothing else is affected. */
-.layout__main:has(> .admin-layout) {
-  max-width: 1400px;
-}
-
+/* Mobile-first: the admin dashboard stays nested inside the public Layout's
+   header/footer below the tablet breakpoint (quick access to Book now/Gallery/
+   notifications/account, and the nav itself collapses behind its own toggle below), the
+   same way it always has. Above that breakpoint it switches to its own full-bleed
+   shell with no public header/footer at all — Layout.css's `.layout--admin` media
+   query (mirrors the same 701px cutoff) hides those and removes the padded/capped
+   <main> around this, which is what the min-width overrides below are sized for. */
 .admin-layout {
   display: flex;
-  gap: var(--space-5);
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .admin-layout__nav {
-  display: flex;
+  display: none;
   flex-direction: column;
-  flex: 0 0 220px;
-  position: sticky;
-  top: var(--space-5);
-  /* Enough nav items now (16+) that this can be taller than the viewport — without a
-     cap the sidebar just grows past the screen with no way to reach "Log out" at the
-     bottom. Capped to the viewport so the links list scrolls internally instead, while
-     the header and footer (Back to site / Log out) stay pinned and always reachable. */
-  max-height: calc(100vh - var(--space-5) * 2);
+  width: 100%;
   background: var(--color-ink);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   gap: var(--space-4);
+}
+.admin-layout__nav--open {
+  display: flex;
 }
 
 .admin-layout__nav-header {
@@ -56,7 +52,8 @@
   /* A flex child won't shrink below its content's natural height by default (min-height:
      auto), which would silently defeat overflow-y: auto here and just push the parent's
      max-height instead — this is what actually lets the list scroll in the leftover
-     space between the header and footer. */
+     space between the header and footer once the desktop override below caps the nav's
+     own height. Harmless on mobile, where the nav has no height cap to begin with. */
   min-height: 0;
 }
 
@@ -133,6 +130,7 @@
 .admin-layout__content {
   flex: 1;
   min-width: 0;
+  padding: var(--space-4);
 }
 
 .admin-layout__page {
@@ -199,7 +197,7 @@
   color: var(--color-text-inverse);
 }
 .admin-top-bar__user {
-  text-align: right;
+  text-align: left;
 }
 .admin-top-bar__user-name {
   margin: 0;
@@ -211,58 +209,59 @@
   font-size: var(--text-sm);
 }
 
+/* The full nav is long enough that below the desktop breakpoint it's collapsed behind
+   this toggle (showing the current page's label) instead of pushing every page's
+   content below the fold. */
 .admin-layout__nav-toggle {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-ink);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-ink-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+  margin-bottom: var(--space-4);
 }
 
-@media (max-width: 700px) {
+@media (min-width: 701px) {
   .admin-layout {
-    flex-direction: column;
-    /* .admin-layout sets `align-items: flex-start` for the desktop row layout (so nav
-       and content top-align instead of stretching to equal height). In this column
-       layout the cross-axis is width, not height, so flex-start left `.admin-layout__content`
-       sized to its widest child's intrinsic width instead of the viewport — e.g. a wide
-       admin table — pushing the whole page into horizontal scroll instead of letting the
-       table's own `overflow-x: auto` wrapper contain it. Stretch forces content back to
-       100% width so that wrapper can do its job. */
+    flex-direction: row;
     align-items: stretch;
+    min-height: 100vh;
   }
 
-  /* The full nav is long enough that on mobile it's collapsed behind this toggle
-     (showing the current page's label) instead of pushing every page's content below
-     the fold. */
   .admin-layout__nav-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-ink);
-    border: none;
-    border-radius: var(--radius-md);
-    color: var(--color-ink-text);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-align: left;
+    display: none;
   }
 
   .admin-layout__nav {
-    display: none;
-    position: static;
-    width: 100%;
-    /* Not sticky here, so the page itself already scrolls normally when this is open —
-       an internally-scrolling links list on top of that would be a nested scroll area,
-       worse on touch than just letting the page scroll. */
-    max-height: none;
-  }
-  .admin-layout__nav--open {
     display: flex;
+    flex: 0 0 220px;
+    width: auto;
+    position: sticky;
+    top: 0;
+    /* Full viewport height, flush against the real left edge (no public header above
+       it, no inset padding around it at this width — see Layout.css) — the links list
+       scrolls internally within that via min-height: 0 on .admin-layout__nav-links
+       above, while the header and footer (Back to site / Log out) stay pinned and
+       always reachable. */
+    height: 100vh;
+    border-radius: 0;
+    margin-bottom: 0;
   }
-  .admin-layout__nav-links {
-    overflow-y: visible;
+
+  .admin-layout__content {
+    height: 100vh;
+    overflow-y: auto;
+    padding: var(--space-5) var(--space-6);
   }
 
   .admin-top-bar__user {
-    text-align: left;
+    text-align: right;
   }
 }
