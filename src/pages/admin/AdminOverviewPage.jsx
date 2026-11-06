@@ -30,7 +30,7 @@ function StatCard({ icon, label, value, variant, to }) {
   const content = (
     <>
       <span className="stat-card__icon" aria-hidden="true">{icon}</span>
-      <div>
+      <div className="stat-card__body">
         <div className="stat-card__label">{label}</div>
         <div className="stat-card__value">{value}</div>
       </div>

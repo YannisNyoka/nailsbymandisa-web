@@ -50,17 +50,36 @@
 .stat-card__icon {
   font-size: var(--text-xl);
   line-height: 1;
+  /* Without this, the icon (a flex sibling of .stat-card__body) would shrink to make
+     room for the value text below instead of the other way around. */
+  flex-shrink: 0;
+}
+.stat-card__body {
+  /* Lets this shrink below its content's intrinsic width (a flex item's default
+     min-width: auto) so a long value — "R2250.00" has no spaces to wrap on — breaks
+     onto a second line via overflow-wrap below, in the narrow ~160px columns two-up on
+     a phone, instead of spilling out past the card's own edge. */
+  min-width: 0;
+  flex: 1;
 }
 .stat-card__label {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
 }
 .stat-card__value {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .stat-card__value {
+    font-size: var(--text-xl);
+  }
 }
 
 /* Variants for the Overview stat grid — all still drawn from the existing token palette

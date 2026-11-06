@@ -46,6 +46,10 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
+  /* Shrinks below its intrinsic width instead of pushing the icon badge (flex-shrink: 0
+     below) out of the card in a narrow two-up mobile column. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .analytics-stat-card__icon {
   flex-shrink: 0;
@@ -65,6 +69,16 @@
 .analytics-stat-card__value {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
+  /* A value like "R2250.00" has no spaces to wrap on — without this it spills out past
+     the card's own edge in a narrow two-up mobile column instead of breaking onto a
+     second line. */
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .analytics-stat-card__value {
+    font-size: var(--text-2xl);
+  }
 }
 .analytics-stat-card__sublabel {
   font-size: var(--text-xs);
@@ -135,15 +149,28 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .growth-stat-card__icon {
   font-size: var(--text-lg);
   line-height: 1;
+  flex-shrink: 0;
 }
 .growth-stat-card__value {
   margin-top: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--text-3xl);
+  /* A value like "R2250.00" has no spaces to wrap on — without this it spills out past
+     the card's own edge in a narrow two-up mobile column instead of breaking onto a
+     second line. */
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .growth-stat-card__value {
+    font-size: var(--text-2xl);
+  }
 }
 .growth-stat-card__growth {
   margin: var(--space-1) 0 0;
