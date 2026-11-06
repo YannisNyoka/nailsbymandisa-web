@@ -19,7 +19,9 @@
 
 .analytics-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* 160px, not 200px, specifically so two columns still fit on a narrow phone — see the
+     same reasoning on .growth-stat-grid below. */
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
@@ -107,7 +109,11 @@
 
 .growth-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* 160px (not the 220px these cards' content would prefer) specifically so two columns
+     still fit on a narrow phone — matches .stat-grid's own minmax, and the reference
+     mobile dashboard's "Revenue | Bookings" paired layout rather than one stacked
+     column. */
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }

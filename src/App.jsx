@@ -90,13 +90,12 @@ export function App() {
           <Route path="/gallery/submit" element={<SubmitPhotoPage />} />
         </Route>
 
-        {/* Nested inside the public Layout (not a sibling route tree) — on mobile the
-            admin dashboard deliberately keeps the public header/footer around it
-            (quick access to Book now/Gallery/notifications/account without leaving the
-            admin nav's own collapsed toggle), and only switches to its own full-bleed,
-            no-public-header shell above the tablet breakpoint. See Layout.jsx's
-            isAdminRoute / Layout.css's `.layout--admin` media query, and
-            AdminLayout.css's matching min-width override. */}
+        {/* Nested inside the public Layout (not a sibling route tree) purely so
+            Layout.jsx's isAdminRoute can flip on `.layout--admin` (Layout.css) — which
+            hides the public header/footer and the WhatsApp button/install prompt for
+            every /admin page at every width. The admin dashboard itself is always its
+            own full-page shell (AdminLayout.jsx/.css): a collapsed hamburger-toggle nav
+            below the desktop breakpoint, a full-height flush sidebar above it. */}
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminOverviewPage />} />

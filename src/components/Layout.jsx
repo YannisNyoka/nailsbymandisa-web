@@ -20,10 +20,10 @@ export function Layout() {
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   // Drives the `.layout--admin` CSS hook (Layout.css) that hides this public
-  // header/footer above the tablet breakpoint only — on mobile the admin dashboard
-  // deliberately keeps them for quick access to Book now/Gallery/notifications/account
-  // alongside the admin nav's own collapsed toggle (AdminLayout.jsx). WhatsApp/the
-  // install prompt stay hidden on every admin page regardless of width: a customer
+  // header/footer for every /admin page, at every width — the admin dashboard is
+  // always its own full-page shell (AdminLayout.jsx/.css), never this public chrome
+  // wrapped around a narrower content column. Also hides WhatsApp/the install prompt
+  // here directly (not worth a CSS hook for two fixed-position elements): a customer
   // contact channel and a public-site install nudge, neither of which belongs here.
   const isAdminRoute = location.pathname.startsWith('/admin');
 

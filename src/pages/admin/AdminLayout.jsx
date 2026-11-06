@@ -136,17 +136,6 @@ export function AdminLayout() {
 
   return (
     <div className="admin-layout">
-      {/* Below 700px the full nav is long enough that showing it expanded would push every
-          page's actual content below the fold. Collapsed behind this toggle by default on
-          mobile; always visible on desktop regardless of navOpen (see CSS). */}
-      <button
-        type="button"
-        className="admin-layout__nav-toggle"
-        aria-expanded={navOpen}
-        onClick={() => setNavOpen((open) => !open)}
-      >
-        {activeItem?.label || 'Menu'} <span aria-hidden="true">{navOpen ? '▴' : '▾'}</span>
-      </button>
       <nav className={`admin-layout__nav${navOpen ? ' admin-layout__nav--open' : ''}`} aria-label="Admin">
         <div className="admin-layout__nav-header">
           <img src="/brand/logo-lockup.png" alt="NailsByMandisa" className="admin-layout__nav-logo" />
@@ -178,7 +167,18 @@ export function AdminLayout() {
         </div>
       </nav>
       <div className="admin-layout__content">
-        <AdminTopBar title={activeItem?.label || 'Admin'} unpaidCount={unpaidCount} count={pageCount} />
+        {/* Below 700px the full nav is long enough that showing it expanded would push
+            every page's content below the fold, so it's collapsed behind this toggle
+            (merged into the top bar's own row, not a separate block above it — a single
+            clean header, not two stacked ones) by default on mobile; always visible on
+            desktop regardless of navOpen, where the toggle itself is hidden (see CSS). */}
+        <AdminTopBar
+          title={activeItem?.label || 'Admin'}
+          unpaidCount={unpaidCount}
+          count={pageCount}
+          navOpen={navOpen}
+          onToggleNav={() => setNavOpen((open) => !open)}
+        />
         <div className="admin-layout__page">
           <Suspense fallback={<RouteLoading />}>
             <Outlet context={{ setPageCount }} />

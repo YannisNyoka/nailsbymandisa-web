@@ -117,23 +117,18 @@
   padding: var(--space-5);
 }
 
-/* Above the tablet breakpoint, the admin dashboard gets its own full-bleed shell with
-   no public header/footer at all (a real sidebar app, not a narrow content column) —
-   AdminLayout.css's matching min-width override supplies the sidebar/content sizing
-   that depends on this space being available. Below it, .layout--admin changes
-   nothing here: the admin dashboard deliberately stays inside this public chrome on
-   mobile (see Layout.jsx), collapsed behind its own nav toggle (AdminLayout.jsx) the
-   same way it always has. */
-@media (min-width: 701px) {
-  .layout--admin .layout__header,
-  .layout--admin .layout__footer {
-    display: none;
-  }
-  .layout--admin .layout__main {
-    max-width: none;
-    margin: 0;
-    padding: 0;
-  }
+/* The admin dashboard is its own full-page shell at every width, never the public
+   site's header/footer wrapped around a narrower content column — AdminLayout.jsx
+   supplies its own minimal mobile header (hamburger + page title) and its own
+   full-bleed desktop sidebar (AdminLayout.css). */
+.layout--admin .layout__header,
+.layout--admin .layout__footer {
+  display: none;
+}
+.layout--admin .layout__main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 .layout__footer {

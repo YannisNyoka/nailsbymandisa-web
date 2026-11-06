@@ -1,10 +1,9 @@
-/* Mobile-first: the admin dashboard stays nested inside the public Layout's
-   header/footer below the tablet breakpoint (quick access to Book now/Gallery/
-   notifications/account, and the nav itself collapses behind its own toggle below), the
-   same way it always has. Above that breakpoint it switches to its own full-bleed
-   shell with no public header/footer at all — Layout.css's `.layout--admin` media
-   query (mirrors the same 701px cutoff) hides those and removes the padded/capped
-   <main> around this, which is what the min-width overrides below are sized for. */
+/* Mobile-first: the admin dashboard is its own full-page shell at every width — never
+   the public site's header/footer wrapped around a narrower content column (that's
+   unconditionally hidden for /admin routes in Layout.css's `.layout--admin` rule). Below
+   the desktop breakpoint the nav collapses behind AdminTopBar's hamburger toggle instead
+   of showing as a fixed sidebar (which wouldn't fit a phone); above it, the min-width
+   overrides further down switch to the full-height flush sidebar. */
 .admin-layout {
   display: flex;
   flex-direction: column;
@@ -146,6 +145,27 @@
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
+.admin-top-bar__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.admin-top-bar__menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
 .admin-top-bar__title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
@@ -210,23 +230,12 @@
   font-size: var(--text-sm);
 }
 
-/* The full nav is long enough that below the desktop breakpoint it's collapsed behind
-   this toggle (showing the current page's label) instead of pushing every page's
-   content below the fold. */
-.admin-layout__nav-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-ink);
-  border: none;
-  border-radius: var(--radius-md);
-  color: var(--color-ink-text);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  text-align: left;
-  margin-bottom: var(--space-4);
+/* Below the desktop breakpoint, the subtitle is dropped (purely decorative, and the nav
+   drawer's own "Admin panel" caption already says as much) so the header is just the
+   hamburger + page title, matching the clean single-bar look of the reference mobile
+   dashboard — not stacked under a second, more cluttered block. */
+.admin-top-bar__subtitle {
+  display: none;
 }
 
 @media (min-width: 701px) {
@@ -236,8 +245,12 @@
     min-height: 100vh;
   }
 
-  .admin-layout__nav-toggle {
+  .admin-top-bar__menu-toggle {
     display: none;
+  }
+
+  .admin-top-bar__subtitle {
+    display: block;
   }
 
   .admin-layout__nav {
