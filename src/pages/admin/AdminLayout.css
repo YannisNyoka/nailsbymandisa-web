@@ -10,17 +10,39 @@
   align-items: stretch;
 }
 
+/* Below the desktop breakpoint this is a slide-in drawer over the page (fixed, off
+   fully to the left when closed), not part of the normal document flow — matching the
+   reference dashboard's mobile nav instead of the old behavior of expanding inline and
+   pushing the page's own content down below the whole nav list. */
+.admin-layout__nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .admin-layout__nav {
-  display: none;
+  display: flex;
   flex-direction: column;
-  width: 100%;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 61;
+  width: min(85vw, 300px);
   background: var(--color-ink);
-  border-radius: var(--radius-lg);
   padding: var(--space-4);
   gap: var(--space-4);
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: var(--shadow-lg);
 }
 .admin-layout__nav--open {
-  display: flex;
+  transform: translateX(0);
 }
 
 .admin-layout__nav-header {
@@ -253,12 +275,20 @@
     display: block;
   }
 
+  /* The backdrop/slide-in-drawer treatment is mobile-only — there's nothing to close,
+     so the backdrop button never renders here (see AdminLayout.jsx), but this still
+     needs to explicitly undo the base rule's transform: without it, the sidebar would
+     stay permanently translated off-screen at this width, since navOpen (and so
+     .admin-layout__nav--open, the only other thing that resets it) never becomes true
+     here — the toggle that would set it is hidden on desktop (see .admin-top-bar__menu-toggle
+     below). */
   .admin-layout__nav {
     display: flex;
     flex: 0 0 220px;
     width: auto;
     position: sticky;
     top: 0;
+    transform: none;
     /* Full viewport height, flush against the real left edge (no public header above
        it, no inset padding around it at this width — see Layout.css) — the links list
        scrolls internally within that via min-height: 0 on .admin-layout__nav-links

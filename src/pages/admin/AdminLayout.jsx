@@ -124,6 +124,18 @@ export function AdminLayout() {
     setPageCount(null);
   }, [location.pathname]);
 
+  // Below the desktop breakpoint the nav is a slide-in drawer over the page (CSS), not
+  // part of the normal document flow — without this, the page underneath would still
+  // scroll along with it, which reads as broken on touch (the drawer appearing to drift
+  // instead of staying put). Desktop never sets navOpen true (the toggle that would is
+  // hidden there), so this is a no-op at that width.
+  useEffect(() => {
+    document.body.style.overflow = navOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [navOpen]);
+
   if (isStaff && !STAFF_ALLOWED_PATHS.some((p) => (p === '/admin' ? location.pathname === p : location.pathname.startsWith(p)))) {
     return <Navigate to="/admin" replace />;
   }
@@ -136,6 +148,10 @@ export function AdminLayout() {
 
   return (
     <div className="admin-layout">
+      {/* Mobile only (CSS) — dims and blocks the page behind the slide-in nav drawer,
+          and closing it this way (tap anywhere outside the drawer) is the same
+          convention every off-canvas mobile nav uses. */}
+      {navOpen && <button type="button" className="admin-layout__nav-backdrop" aria-label="Close menu" onClick={() => setNavOpen(false)} />}
       <nav className={`admin-layout__nav${navOpen ? ' admin-layout__nav--open' : ''}`} aria-label="Admin">
         <div className="admin-layout__nav-header">
           <img src="/brand/logo-lockup.png" alt="NailsByMandisa" className="admin-layout__nav-logo" />
